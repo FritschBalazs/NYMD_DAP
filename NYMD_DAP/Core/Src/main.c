@@ -19,10 +19,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
+#include "usbd_cdc_if.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "usbd_cdc_if.h"
+//#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,14 +46,14 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
-
+uint32_t reset_source;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_USART6_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -69,7 +70,8 @@ static void MX_USART6_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  
+  
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -85,17 +87,37 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  //get reset source
+  reset_source = (uint32_t)((RCC->CSR) & 0xFF000000U);
+
+  //clear the SCR wit RMVF bit.
+  RCC->CSR |=  RCC_CSR_RMVF;
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_USB_DEVICE_Init();
-  MX_TIM2_Init();
   MX_USART6_UART_Init();
+  MX_TIM2_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t buf[] = {"Hello world\r\n"};
-  HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
+  uint8_t buf_reset[] = {"Last reset caused by: "};
+  uint8_t buf[] = {"Ping3... \r\n"};
+  uint8_t buf_cdc[] = {"Hello world... \r\n"};
+
+  HAL_Delay(100);
+  //HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
+
+
+  //send out cause of reset
+  HAL_UART_Transmit(&huart6, buf_reset, sizeof(buf_reset), 100);
+
+  buf_reset[0] = (reset_source >> 24)+48;
+  buf_reset[1] = '\r';
+  buf_reset[2] = '\n';
+  HAL_UART_Transmit(&huart6, buf_reset, 3, 100);
+
+  //HAL_GPIO_WritePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -106,8 +128,9 @@ int main(void)
 	  if(HAL_GPIO_ReadPin(SB2_INPUT_GPIO_Port, SB2_INPUT_Pin) == GPIO_PIN_SET){
 		  HAL_GPIO_TogglePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin);
 	  }
+	  //HAL_GPIO_TogglePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin);
 	  HAL_UART_Transmit(&huart6, buf, sizeof(buf), 100);
-	  //CDC_Transmit_HS(buf,sizeof(buf));
+	  CDC_Transmit_HS(buf_cdc,sizeof(buf));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -188,11 +211,11 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 4;
+  htim2.Init.Prescaler = 90;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 1000000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -268,6 +291,8 @@ static void MX_USART6_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
@@ -311,6 +336,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_RUNNING_GPIO_Port, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
