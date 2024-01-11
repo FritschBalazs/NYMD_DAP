@@ -47,6 +47,7 @@ UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
 uint32_t reset_source;
+volatile uint32_t retval;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -130,7 +131,7 @@ int main(void)
 	  }
 	  //HAL_GPIO_TogglePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin);
 	  HAL_UART_Transmit(&huart6, buf, sizeof(buf), 100);
-	  CDC_Transmit_HS(buf_cdc,sizeof(buf));
+	  retval = CDC_Transmit_HS(buf_cdc,sizeof(buf));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
