@@ -104,7 +104,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint8_t buf_reset[] = {"Last reset caused by: "};
   uint8_t buf[] = {"Ping3... \r\n"};
-  uint8_t buf_cdc[] = {"Hello world... \r\n"};
+  uint8_t buf_cdc[] = {"Hello world... 00\n\r"};
 
   HAL_Delay(100);
   //HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
@@ -125,13 +125,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(2500);
+	  HAL_Delay(10000);
 	  if(HAL_GPIO_ReadPin(SB2_INPUT_GPIO_Port, SB2_INPUT_Pin) == GPIO_PIN_SET){
 		  HAL_GPIO_TogglePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin);
 	  }
 	  //HAL_GPIO_TogglePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin);
 	  HAL_UART_Transmit(&huart6, buf, sizeof(buf), 100);
-	  retval = CDC_Transmit_HS(buf_cdc,sizeof(buf));
+	  buf_cdc[16]++;
+	  if(buf_cdc[16]=='9'+1){
+		  buf_cdc[16]='0';
+		  buf_cdc[15]++;
+	  }
+	  retval = CDC_Transmit_HS(buf_cdc,sizeof(buf_cdc));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
