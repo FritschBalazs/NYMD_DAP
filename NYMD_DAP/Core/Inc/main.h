@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -49,8 +49,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -63,8 +61,6 @@ void Error_Handler(void);
 #define TARGET_nRESET_GPIO_Port GPIOC
 #define TARGET_NC_TDI_Pin GPIO_PIN_8
 #define TARGET_NC_TDI_GPIO_Port GPIOA
-#define TARGET_SWO_TDO_Pin GPIO_PIN_10
-#define TARGET_SWO_TDO_GPIO_Port GPIOA
 #define TARGET_SWCLK_TCK_Pin GPIO_PIN_11
 #define TARGET_SWCLK_TCK_GPIO_Port GPIOA
 #define TARGET_SWDIO_TMS_Pin GPIO_PIN_12
