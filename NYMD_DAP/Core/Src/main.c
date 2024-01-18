@@ -19,12 +19,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usart.h"
-#include "usb_otg.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "debugger.h"	//TODO clear unused includes
+#include "usbd_cdc.h"
+#include "usbd_customhid.h"
+#include "usbd_composite_builder.h"
+#include "usbd_desc.h"
+#include "usbd_custom_hid_if.h"
+#include "usbd_cdc_if.h"
+#include "circ_buf.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,7 +51,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+USBD_HandleTypeDef hUsbDeviceHS;
 
+uint8_t CDC_InstID, CUSTOMHID_InstID = 0;
+
+uint8_t CustomHID_EpAdress[2] = {CUSTOM_HID_EPIN_ADDR, CUSTOM_HID_EPOUT_ADDR};  /* CustomHID Endpoint Adress */
+uint8_t CDC_EpAdress[3] = {CDC_IN_EP, CDC_OUT_EP, CDC_CMD_EP};  /* CDC Endpoint Adress */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,8 +100,62 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
-  MX_USB_OTG_HS_PCD_Init();
   /* USER CODE BEGIN 2 */
+
+  /* init circular buffers */
+  cbuf_init_ALL();
+
+  /* Init Device Library, add supported class and start the library. */
+  if (USBD_Init(&hUsbDeviceHS, &HS_Desc, DEVICE_HS) != USBD_OK)
+  {
+	  Error_Handler();
+  }
+
+  //debug
+  USBD_StatusTypeDef retval;
+
+
+
+
+  /* Store CDC instance Class ID */
+  CDC_InstID = hUsbDeviceHS.classId;
+
+  /* Register CDC class first instance */
+  retval = USBD_RegisterClassComposite(&hUsbDeviceHS, USBD_CDC_CLASS, CLASS_TYPE_CDC, CDC_EpAdress);
+
+  /* Store Custom HID instance Class ID */
+  CUSTOMHID_InstID = hUsbDeviceHS.classId;
+
+  /* Register the Custom HID  class */
+  retval = USBD_RegisterClassComposite(&hUsbDeviceHS, USBD_CUSTOM_HID_CLASS, CLASS_TYPE_CHID, CustomHID_EpAdress);
+
+
+  /* Add CDC Interface Class */
+  if (USBD_CMPSIT_SetClassID(&hUsbDeviceHS, CLASS_TYPE_CDC, 0) != 0xFF)
+  {
+	  retval = USBD_CDC_RegisterInterface(&hUsbDeviceHS, &USBD_CDC_fops_HS);
+  }
+
+
+  /* Add Custom HID Interface Class */
+  if (USBD_CMPSIT_SetClassID(&hUsbDeviceHS, CLASS_TYPE_CHID, 0) != 0xFF)
+  {
+	  retval = USBD_CUSTOM_HID_RegisterInterface(&hUsbDeviceHS, &USBD_CustomHID_fops_HS);
+  }
+
+
+  retval = USBD_Start(&hUsbDeviceHS);
+  if ( retval != USBD_OK)
+  {
+	  Error_Handler();
+  }
+
+  HAL_TIM_Base_Start(&htim14);
+
+
+  //printf("\r\n");
+  printf(__DATE__" " __TIME__"\r\n");
+  APP_Setup();
 
   /* USER CODE END 2 */
 
@@ -101,6 +166,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    APP_Run();
+
   }
   /* USER CODE END 3 */
 }

@@ -57,7 +57,6 @@
 /* External variables --------------------------------------------------------*/
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
-extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -236,7 +235,7 @@ void OTG_HS_EP1_OUT_IRQHandler(void)
   /* USER CODE BEGIN OTG_HS_EP1_OUT_IRQn 0 */
 
   /* USER CODE END OTG_HS_EP1_OUT_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
+  HAL_PCD_IRQHandler();
   /* USER CODE BEGIN OTG_HS_EP1_OUT_IRQn 1 */
 
   /* USER CODE END OTG_HS_EP1_OUT_IRQn 1 */
@@ -250,7 +249,7 @@ void OTG_HS_EP1_IN_IRQHandler(void)
   /* USER CODE BEGIN OTG_HS_EP1_IN_IRQn 0 */
 
   /* USER CODE END OTG_HS_EP1_IN_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
+  HAL_PCD_IRQHandler();
   /* USER CODE BEGIN OTG_HS_EP1_IN_IRQn 1 */
 
   /* USER CODE END OTG_HS_EP1_IN_IRQn 1 */
@@ -264,7 +263,7 @@ void OTG_HS_IRQHandler(void)
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
 
   /* USER CODE END OTG_HS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
+  HAL_PCD_IRQHandler();
   /* USER CODE BEGIN OTG_HS_IRQn 1 */
 
   /* USER CODE END OTG_HS_IRQn 1 */
