@@ -150,8 +150,6 @@ int main(void)
 	  Error_Handler();
   }
 
-  HAL_TIM_Base_Start(&htim14);
-
 
   //printf("\r\n");
   printf(__DATE__" " __TIME__"\r\n");

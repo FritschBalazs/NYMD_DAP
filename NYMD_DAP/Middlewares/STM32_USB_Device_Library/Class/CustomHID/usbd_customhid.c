@@ -426,8 +426,7 @@ static uint8_t USBD_CUSTOM_HID_Setup(USBD_HandleTypeDef *pdev,
             {
               /* Let the application decide what to do, keep EP0 data phase in NAK state and
                  use USBD_CtlSendData() when data become available or stall the EP0 data phase */
-              ((USBD_CUSTOM_HID_ItfTypeDef *)pdev->pUserData[pdev->classId])->CtrlReqComplete(req->bRequest,
-                                                                                              req->wLength);
+              ((USBD_CUSTOM_HID_ItfTypeDef *)pdev->pUserData[pdev->classId])->CtrlReqComplete(req->bRequest, req->wLength);
             }
             else
             {
@@ -568,6 +567,7 @@ uint8_t USBD_CUSTOM_HID_SendReport(USBD_HandleTypeDef *pdev,
   }
   return (uint8_t)USBD_OK;
 }
+
 #ifndef USE_USBD_COMPOSITE
 /**
   * @brief  USBD_CUSTOM_HID_GetFSCfgDesc
@@ -667,7 +667,17 @@ static uint8_t USBD_CUSTOM_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
   /* Ensure that the FIFO is empty before a new transfer, this condition could
   be caused by  a new transfer before the end of the previous transfer */
-  ((USBD_CUSTOM_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId])->state = CUSTOM_HID_IDLE;
+  //((USBD_CUSTOM_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId])->state = CUSTOM_HID_IDLE;
+
+  USBD_CUSTOM_HID_HandleTypeDef * hhid = (USBD_CUSTOM_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
+  hhid->state = CUSTOM_HID_IDLE;
+
+
+  /* I added a new interface func in the structure USBD_CUSTOM_HID_ItfTypeDef. */
+
+  USBD_CUSTOM_HID_ItfTypeDef * hhid_itf = (pdev->pUserData[CUSTOMHID_InstID]);
+  hhid_itf->InEvent();
+
 
   return (uint8_t)USBD_OK;
 }
@@ -682,19 +692,18 @@ static uint8_t USBD_CUSTOM_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 static uint8_t USBD_CUSTOM_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
   UNUSED(epnum);
-  USBD_CUSTOM_HID_HandleTypeDef *hhid;
+
 
   if (pdev->pClassDataCmsit[pdev->classId] == NULL)
   {
     return (uint8_t)USBD_FAIL;
   }
 
-  hhid = (USBD_CUSTOM_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
 
   /* USB data will be immediately processed, this allow next USB traffic being
   NAKed till the end of the application processing */
-  ((USBD_CUSTOM_HID_ItfTypeDef *)pdev->pUserData[pdev->classId])->OutEvent(hhid->Report_buf[0],
-                                                                           hhid->Report_buf[1]);
+  USBD_CUSTOM_HID_ItfTypeDef * hhid_itf = (pdev->pUserData[CUSTOMHID_InstID]);
+  hhid_itf->OutEvent();
 
   return (uint8_t)USBD_OK;
 }
@@ -747,8 +756,7 @@ static uint8_t USBD_CUSTOM_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
   if (hhid->IsReportAvailable == 1U)
   {
-    ((USBD_CUSTOM_HID_ItfTypeDef *)pdev->pUserData[pdev->classId])->OutEvent(hhid->Report_buf[0],
-                                                                             hhid->Report_buf[1]);
+    ((USBD_CUSTOM_HID_ItfTypeDef *)pdev->pUserData[pdev->classId])->OutEvent();
     hhid->IsReportAvailable = 0U;
   }
 

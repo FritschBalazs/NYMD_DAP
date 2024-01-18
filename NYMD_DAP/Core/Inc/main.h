@@ -36,7 +36,8 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+extern uint8_t CDC_InstID;
+extern uint8_t CUSTOMHID_InstID;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
