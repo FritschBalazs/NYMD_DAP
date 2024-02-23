@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -67,7 +68,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t debug_buffer[10];
 /* USER CODE END 0 */
 
 /**
@@ -98,6 +99,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -144,7 +146,7 @@ int main(void)
   }
 
 
-  retval = USBD_Start(&hUsbDeviceHS);
+  //retval = USBD_Start(&hUsbDeviceHS);
   if ( retval != USBD_OK)
   {
 	  Error_Handler();
@@ -154,6 +156,8 @@ int main(void)
   //printf("\r\n");
   printf(__DATE__" " __TIME__"\r\n");
   APP_Setup();
+
+  HAL_UART_Receive_DMA(&huart1, debug_buffer, 4);
 
   /* USER CODE END 2 */
 
@@ -224,7 +228,11 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if (huart->Instance == USART1){
+		while(1);
+	}
+}
 /* USER CODE END 4 */
 
 /**

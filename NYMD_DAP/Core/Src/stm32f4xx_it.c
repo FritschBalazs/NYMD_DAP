@@ -55,6 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
@@ -214,6 +215,20 @@ void USART1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream2 global interrupt.
+  */
+void DMA2_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART6 global interrupt.
   */
 void USART6_IRQHandler(void)
@@ -235,7 +250,7 @@ void OTG_HS_EP1_OUT_IRQHandler(void)
   /* USER CODE BEGIN OTG_HS_EP1_OUT_IRQn 0 */
 
   /* USER CODE END OTG_HS_EP1_OUT_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);		//TODO figure out which interrupts are required,
+  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);                //TODO figure out which interrupts are required,
   /* USER CODE BEGIN OTG_HS_EP1_OUT_IRQn 1 */
 
   /* USER CODE END OTG_HS_EP1_OUT_IRQn 1 */
