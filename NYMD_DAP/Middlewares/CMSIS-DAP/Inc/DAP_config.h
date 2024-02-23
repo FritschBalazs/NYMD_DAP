@@ -347,7 +347,7 @@ Disables the DAP Hardware I/O pins which configures:
 */
 __STATIC_INLINE void PORT_OFF (void) {
 	HAL_GPIO_DeInit(TARGET_nRESET_GPIO_Port, TARGET_nRESET_Pin);
-	HAL_GPIO_DeInit(GPIOG, TARGET_SWDIO_TMS_Pin|TARGET_SWCLK_TCK_Pin);
+	HAL_GPIO_DeInit(TARGET_SWDIO_TMS_GPIO_Port, TARGET_SWDIO_TMS_Pin|TARGET_SWCLK_TCK_Pin);
 }
 
 
