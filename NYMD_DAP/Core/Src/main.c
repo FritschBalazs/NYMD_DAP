@@ -157,7 +157,8 @@ int main(void)
   printf(__DATE__" " __TIME__"\r\n");
   APP_Setup();
 
-  HAL_UART_Receive_DMA(&huart1, debug_buffer, 4);
+  //HAL_UART_Receive_DMA(&huart1, debug_buffer, 4);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, debug_buffer, 4);
 
   /* USER CODE END 2 */
 
@@ -231,6 +232,22 @@ void SystemClock_Config(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if (huart->Instance == USART1){
 		while(1);
+	}
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
+	UNUSED(Size);
+	if (huart->Instance == USART1){
+		if (huart->RxEventType == HAL_UART_RXEVENT_TC){ //Tranmition complete
+			return;
+		}
+		if (huart->RxEventType == HAL_UART_RXEVENT_HT){ //Transmition half complete
+			return;
+		}
+		if (huart->RxEventType == HAL_UART_RXEVENT_IDLE){
+			return;
+
+		}
 	}
 }
 /* USER CODE END 4 */
