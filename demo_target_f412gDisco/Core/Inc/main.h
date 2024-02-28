@@ -58,10 +58,25 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED4_Pin GPIO_PIN_3
-#define LED4_GPIO_Port GPIOE
-#define LED2_Pin GPIO_PIN_1
-#define LED2_GPIO_Port GPIOE
+#define LED3_RED_Pin GPIO_PIN_2
+#define LED3_RED_GPIO_Port GPIOE
+#define LED4_BLU_Pin GPIO_PIN_3
+#define LED4_BLU_GPIO_Port GPIOE
+#define JOY_SEL_Pin GPIO_PIN_0
+#define JOY_SEL_GPIO_Port GPIOA
+#define JOY_RIGHT_Pin GPIO_PIN_14
+#define JOY_RIGHT_GPIO_Port GPIOF
+#define JOY_LEFT_Pin GPIO_PIN_15
+#define JOY_LEFT_GPIO_Port GPIOF
+#define JOY_UP_Pin GPIO_PIN_0
+#define JOY_UP_GPIO_Port GPIOG
+#define JOY_DOWN_Pin GPIO_PIN_1
+#define JOY_DOWN_GPIO_Port GPIOG
+#define LED1_GRE_Pin GPIO_PIN_0
+#define LED1_GRE_GPIO_Port GPIOE
+#define LED2_ORG_Pin GPIO_PIN_1
+#define LED2_ORG_GPIO_Port GPIOE
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -71,5 +86,3 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

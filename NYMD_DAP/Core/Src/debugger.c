@@ -13,8 +13,10 @@
 #include "usbd_customhid.h"
 #include "DAP.h"
 #include "usbd_cdc_if.h"
+#include "usart.h"
 
 #define USB_HID_BUSY_USER_TIMEOUT (2U)
+#define SWO_CAPTURE_BUFF_SIZE (1*4*8)  //4 word FIFO with byte packing
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
@@ -34,6 +36,13 @@ static volatile uint8_t  USB_ResponseIdle;      // Response Idle  Flag
 
 static uint8_t  USB_Request [DAP_PACKET_COUNT][DAP_PACKET_SIZE];  // Request  Buffer (circular)
 static uint8_t  USB_Response[DAP_PACKET_COUNT][DAP_PACKET_SIZE];  // Response Buffer (circular)
+
+uint8_t SWO_buff_0[SWO_CAPTURE_BUFF_SIZE];
+uint8_t SWO_buff_1[SWO_CAPTURE_BUFF_SIZE];
+uint8_t* pActive_SWO_buff;					//indicates buffer that is currently receiving data
+uint8_t SWO_buff_empty;						//flag to indicate that the unused buffer has been emptied
+uint8_t SWO_buff_overrun_ERR;				//error flag
+uint8_t CDC_Tx_ERR;						//CDC_Transimt_HS failed
 
 bool REQUEST_FLAG = 0;
 bool BUFFER_FULL_FLAG = 0;
@@ -150,6 +159,126 @@ bool HID0_SetReport (uint8_t rtype, uint8_t req, uint8_t rid, const uint8_t *buf
   return true;
 }
 
+/* Function to call from the uart receive callback.
+ * It works on a doubble buffer prinicple. UART DMA is
+ *    configured with fifo and byte packing
+ *    to minimize periph bus usage when data
+ *    is coming in constantly.
+ * But DMA reception is handeled with a timout param,
+ *    os if there is an inactive period on the uart line,
+ *    the callback is called, and a timeout is indicated.
+ *
+ */
+void capture_SWO_init(void){
+	pActive_SWO_buff = SWO_buff_0;
+	SWO_buff_empty = 1;
+	SWO_buff_overrun_ERR = 0;
+	HAL_UARTEx_ReceiveToIdle_DMA(&huart1, pActive_SWO_buff, SWO_CAPTURE_BUFF_SIZE);
+
+}
+
+HAL_StatusTypeDef SWO_setspeed(){
+
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if (huart->Instance == USART1){
+		while(1);
+	}
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
+
+
+	if (huart->Instance == USART1){
+		uint8_t* rx_buffer = pActive_SWO_buff;
+
+		if (!SWO_buff_empty){
+			SWO_buff_overrun_ERR = 1;
+		}
+
+		/* change buffers */
+		if (pActive_SWO_buff == SWO_buff_0){
+			pActive_SWO_buff = SWO_buff_1;
+		}else{
+			pActive_SWO_buff = SWO_buff_0;
+		}
+		//set flag to
+		SWO_buff_empty = 0;
+		/* start next reception */
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart1, pActive_SWO_buff, SWO_CAPTURE_BUFF_SIZE);
+
+		if (CDC_Transmit_HS(rx_buffer, Size) == USBD_OK){
+			SWO_buff_empty = 1;
+		}else{
+			CDC_Tx_ERR = 1;
+		}
+
+
+		if (huart->RxEventType == HAL_UART_RXEVENT_TC){ //Transmittion complete
+			return;
+		}
+		if (huart->RxEventType == HAL_UART_RXEVENT_HT){ //Transmition half complete
+			return;
+		}
+		if (huart->RxEventType == HAL_UART_RXEVENT_IDLE){
+			return;
+
+		}
+	}
+}
+
+
+
+/* Wrapper for USBD_HID_SendReport(). It checks device state first, and calls remote wakeup if needed
+ *
+ * based on HID_Standalone wakeup example for f746G disco */
+uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len){
+
+/* once remoteWakeUp is supported properly, I will clean this up //TODO remoteWakeup?
+	if ((pdev->dev_remote_wakeup == 1) && (pdev->dev_state == USBD_STATE_SUSPENDED)){
+		if ((&hpcd_USB_OTG_HS)->Init.low_power_enable)
+		{
+			// Reset SLEEPDEEP bit of Cortex System Control Register
+			SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
+
+	        //SystemClockConfig_STOP();
+		}
+
+		// Ungate PHY clock
+		__HAL_PCD_UNGATE_PHYCLOCK((&hpcd_USB_OTG_HS));
+
+		// Activate Remote wakeup
+		HAL_PCD_ActivateRemoteWakeup((&hpcd_USB_OTG_HS));
+
+		// Remote wakeup delay
+		HAL_Delay(10);
+
+		// Disable Remote wakeup
+		HAL_PCD_DeActivateRemoteWakeup((&hpcd_USB_OTG_HS));
+
+		// change state to configured
+		pdev->dev_state = USBD_STATE_CONFIGURED;
+
+		// Change remote_wakeup feature to 0
+		pdev->dev_remote_wakeup=0;
+		//remotewakeupon = 1;
+
+		printf("Remote wakeup \r\n");
+	}
+*/
+
+	if (USBD_CUSTOM_HID_SendReport(pdev, report, len, CUSTOMHID_InstID) == CUSTOM_HID_BUSY){
+		uint32_t timestamp = HAL_GetTick();
+		while(USBD_CUSTOM_HID_SendReport(pdev, report, len, CUSTOMHID_InstID) != USBD_OK && (timestamp + USB_HID_BUSY_USER_TIMEOUT >= HAL_GetTick())){
+			//wait
+		}
+	}
+
+	return 0;
+
+}
+
 // just for test
 uint32_t cnt = 0;
 uint8_t text[CDC_DATA_HS_MAX_PACKET_SIZE] = {"Hello \r\n"};
@@ -221,67 +350,41 @@ void APP_Run(void){
 		}
 	}
 
-	cnt++;
+	/* if HS transmit failed in callback try again here */
+	if (SWO_buff_overrun_ERR){
+		if (CDC_Transmit_HS("ERR: Buffer overrun occured \n", 30) == USBD_OK){
+			SWO_buff_overrun_ERR = 0;
+			SWO_buff_empty = 1;
+		}
+		else{
+			printf("SWO buffer overrun ");
+		}
+
+	}
+
+	if(CDC_Tx_ERR){
+		if (CDC_Transmit_HS("CDC TX error occured \n", 23) == USBD_OK){
+			CDC_Tx_ERR = 0;
+			SWO_buff_empty = 1;
+		}
+		else{
+			printf("CDC TX error occured \n");
+		}
+	}
+
+	//CDC testcode
+	/*cnt++;
 	if (cnt>=10000000){
 		cnt = 0;
 		if (enable_send){
 			CDC_Transmit_HS(&text, sizeof(text));
 		}
-	}
+	}*/
 
 
 }
 
 
-
-/* Wrapper for USBD_HID_SendReport(). It checks device state first, and calls remote wakeup if needed
- *
- * based on HID_Standalone wakeup example for f746G disco */
-uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len){
-
-/* once remoteWakeUp is supported properly, I will clean this up //TODO remoteWakeup?
-	if ((pdev->dev_remote_wakeup == 1) && (pdev->dev_state == USBD_STATE_SUSPENDED)){
-		if ((&hpcd_USB_OTG_HS)->Init.low_power_enable)
-		{
-			// Reset SLEEPDEEP bit of Cortex System Control Register
-			SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
-
-	        //SystemClockConfig_STOP();
-		}
-
-		// Ungate PHY clock
-		__HAL_PCD_UNGATE_PHYCLOCK((&hpcd_USB_OTG_HS));
-
-		// Activate Remote wakeup
-		HAL_PCD_ActivateRemoteWakeup((&hpcd_USB_OTG_HS));
-
-		// Remote wakeup delay
-		HAL_Delay(10);
-
-		// Disable Remote wakeup
-		HAL_PCD_DeActivateRemoteWakeup((&hpcd_USB_OTG_HS));
-
-		// change state to configured
-		pdev->dev_state = USBD_STATE_CONFIGURED;
-
-		// Change remote_wakeup feature to 0
-		pdev->dev_remote_wakeup=0;
-		//remotewakeupon = 1;
-
-		printf("Remote wakeup \r\n");
-	}
-*/
-
-	if (USBD_CUSTOM_HID_SendReport(pdev, report, len, CUSTOMHID_InstID) == CUSTOM_HID_BUSY){
-		uint32_t timestamp = HAL_GetTick();
-		while(USBD_CUSTOM_HID_SendReport(pdev, report, len, CUSTOMHID_InstID) != USBD_OK && (timestamp + USB_HID_BUSY_USER_TIMEOUT >= HAL_GetTick())){
-			//wait
-		}
-	}
-
-	return 0;
-
-}
 
 void APP_Setup(void){
 	DAP_Setup();                          // DAP Setup
@@ -294,5 +397,6 @@ void APP_Setup(void){
 	LED_RUNNING_OUT(0U);                  // Turn off Target Running LED
 	LED_CONNECTED_OUT(0U);                // Turn off Debugger Connected LED //TODO connect LED
 
+	capture_SWO_init();					  //start capturing SWO Data
 
 }
