@@ -58,7 +58,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+void setup_TRACE(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -99,6 +99,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  setup_TRACE();
 
   //turn off LEDs
   HAL_GPIO_WritePin( LED1_GRE_GPIO_Port,  LED1_GRE_Pin, GPIO_PIN_SET);
@@ -336,7 +338,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void setup_TRACE(void){
-  uint32_t cpuCoreFreqHz = 72000000; // 72 MHz
+  uint32_t cpuCoreFreqHz = 100000000; // 100 MHz
   uint32_t SWOSpeed = 115200; // 115200 baud rate
   uint32_t SWOPrescaler = (cpuCoreFreqHz / SWOSpeed) - 1;
 

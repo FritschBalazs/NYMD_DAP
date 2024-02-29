@@ -173,6 +173,7 @@ void capture_SWO_init(void){
 	pActive_SWO_buff = SWO_buff_0;
 	SWO_buff_empty = 1;
 	SWO_buff_overrun_ERR = 0;
+	CDC_Tx_ERR  = 0;
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart1, pActive_SWO_buff, SWO_CAPTURE_BUFF_SIZE);
 
 }

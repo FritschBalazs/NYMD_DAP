@@ -153,6 +153,14 @@ int main(void)
   }
 
 
+  retval = USBD_Start(&hUsbDeviceHS);
+  if ( retval != USBD_OK)
+  {
+	  Error_Handler();
+  }
+
+
+
   //printf("\r\n");
   printf(__DATE__" " __TIME__"\r\n");
   APP_Setup();
