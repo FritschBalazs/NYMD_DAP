@@ -4,7 +4,7 @@ from enum import Enum
 
 
 # Synchronization packet header. 
-SYNC_HEADER	=	0x00
+SYNC_HEADER	= 0x00
 
 # Minimal number of 0 bits required for a synchronization packet. 
 SYNC_MIN_BITS	=	47
@@ -14,6 +14,8 @@ OVERFLOW_HEADER	=	0x70
 
 # Local timestamp packet header. 
 LTS_HEADER	=	0xc0
+
+LTS_CBIT_MASK = 0x80
 
 # Bitmask for the timestamp of a local timestamp (LTS1) packet. 
 LTS1_TS_MASK	=	0xfffffff
@@ -84,6 +86,11 @@ SRC_ADDR_OFFSET	=	3
 # Bitmask for the continuation bit. 
 C_MASK		=	0x80
 
+#Helper to convert bytes object to int
+def toInt(bytes): 
+    return int.from_bytes(bytes,byteorder = 'little',signed=False)
+
+
 class packet_types(Enum):
     SYNC   = 1
     OF     = 2
@@ -139,11 +146,11 @@ def decode_header(header_byte):
 def sync_packet_handler(header):
     #start counting bytes til first none zero byte
     num_bytes = 0
-    tmp = ser.read(1)
+    tmp = toInt(ser.read(1))
     
     while  tmp == 0b0 :
         num_bytes += 1
-        tmp = ser.read(1)
+        tmp = toInt(ser.read(1))
     
     #add zero bits to the count
     num_of_bits = 0
@@ -160,26 +167,44 @@ def sync_packet_handler(header):
         print("Unknown package found. (Sync) ")
 
 def lts_packet_handler(header):
-    tmp = header
-    data_buf = array.array('B')
-    while (tmp & 0b10000000):
-        data_buff.append(tmp)
+    
+    data_buf = []
+    if header & LTS_CBIT_MASK:     #LTS1 -> at lest one payload byte
+        data_buf.append( toInt(ser.read(1)))
+        while (data_buf[-1] & LTS_CBIT_MASK):
+            data_buf.append(toInt(ser.read(1)))
+        TS = 0
+        offset = 0
+        for element in data_buf :
+            TS = TS & ((element&LTS1_TS_MASK) << offset)  #format is 0bCddddddd C:continuatian bit, d 7 bits of data
+            offset += 7
+        TC = (header & LTS1_TC_MASK) >> LTS1_TC_OFFSET
+
+        print("LTS packet TS= ",TS, " TC =", TC)
+    else :                          #LTS2 -> data is in the header
+        TS = (header & LTS2_TS_MASK) >> LTS2_TS_OFFSET
+        print("LTS packet TS= ",TS)
+            
+            
     
 def ext_packet_handler(header):
+    print("EXT packet: TODO")
 
 def gts_packet_handler(header):
-
+    print("GTS packet: TODO")
 def hw_packet_handler(header):
-
-def isnt_packet_handler(header):
+    print("HW packet: TO")
+def inst_packet_handler(header):
+    print("Instrumentation packet: TODO")
     
 # Serial port configuration
-ser = serial.Serial('COM4', 115200)  # Change COM1 to the appropriate port and 9600 to the correct baudrate
+#ser = serial.Serial('COM4', 115200)  # Change COM1 to the appropriate port and 9600 to the correct baudrate
+ser = open("putty_example.log","rb")
 
 try:
     while True:
         # Read header byte
-        header_byte = ord(ser.read(1))
+        header_byte = toInt(ser.read(1))
         p_type = decode_header(header_byte)
 
         if p_type == packet_types.SYNC :
@@ -202,11 +227,17 @@ try:
         if p_type == packet_types.HW :
             hw_packet_handler(header_byte)
         if p_type == packet_types.INST :
-            isnt_packet_handler(header_byte)
+            inst_packet_handler(header_byte)
         if p_type == packet_types.ERR :
             print("Error, invalid header: ",bytes(header_byte))
 
         
 except KeyboardInterrupt:
+    print("Stopping on keyb intterrupt.")
+
+except Exception as e:
+    print("An unexpected error occurred:", e, e.args)
+
+finally:
     ser.close()
-    print("Serial port closed.")
+    print("Closing serial/file")
