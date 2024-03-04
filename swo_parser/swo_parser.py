@@ -1,5 +1,4 @@
-import serial
-import array
+#import serial
 from enum import Enum
 
 
@@ -18,7 +17,7 @@ LTS_HEADER	=	0xc0
 LTS_CBIT_MASK = 0x80
 
 # Bitmask for the timestamp of a local timestamp (LTS1) packet. 
-LTS1_TS_MASK	=	0xfffffff
+LTS1_TS_MASK	=	0b01111111
 
 # Bitmask for the relation information of a local timestamp (LTS1) packet. 
 LTS1_TC_MASK	=	0x30
@@ -86,8 +85,22 @@ SRC_ADDR_OFFSET	=	3
 # Bitmask for the continuation bit. 
 C_MASK		=	0x80
 
+HW_EXCEPTION_HEADER     = 0x0e  #exception, including size=2
+HW_PC_PER_HEADER        = 0x17  #periodic PC , including size=4
+HW_PC_PER_SLP_HEADER    = 0x15  #periodic PC in sleep mode, including size=2
+HW_PC_ADDR_MASK         = 0xcf  #for non periodic PC and data value headers, including size bits
+HW_PC_HEADER            = 0x47  #non periodic PC, incuding size=4
+HW_DATA_ADDR_MASK       = 0x4e  #data adress, includeing size=2
+HW_DATA_VALUE_MASK      = 0xc4  #data value, without size bits
+HW_DATA_VALUE_HEADER    = 0x84  #data value, without size
+HW_DATA_RW_MASK         = 0x08  #bit 3. 0=read
+HW_DATA_RW_OFFSET       = 3
+
+
 #Helper to convert bytes object to int
-def toInt(bytes): 
+def toInt(bytes):
+    if bytes == b'':
+         raise Exception("EOF reached") 
     return int.from_bytes(bytes,byteorder = 'little',signed=False)
 
 
@@ -102,7 +115,14 @@ class packet_types(Enum):
     INST   = 8
     ERR    = 9
 
-
+class hw_p_types(Enum):
+    PC          = 1
+    DATA_ADDR   = 2
+    DATA_VALUE  = 3
+    EXCEPTION   = 4
+    PC_PERIODIC = 5
+    PC_PER_SLP  = 6
+    EVENT_PER   = 7
 
 # Function to determine header type
 def decode_header(header_byte):
@@ -143,6 +163,8 @@ def decode_header(header_byte):
     # Process the data bytes
     # Here, you can add your custom logic to handle the data_bytes
 
+
+
 def sync_packet_handler(header):
     #start counting bytes til first none zero byte
     num_bytes = 0
@@ -164,7 +186,7 @@ def sync_packet_handler(header):
     if num_of_bits >= SYNC_MIN_BITS :
         print("Sync packet received.")
     else :
-        print("Unknown package found. (Sync) ")
+        print("Unknown package found. (Sync). Num of bytes: ",num_bytes, " Num of bits: ", num_of_bits)
 
 def lts_packet_handler(header):
     
@@ -176,7 +198,7 @@ def lts_packet_handler(header):
         TS = 0
         offset = 0
         for element in data_buf :
-            TS = TS & ((element&LTS1_TS_MASK) << offset)  #format is 0bCddddddd C:continuatian bit, d 7 bits of data
+            TS = TS | ((element&LTS1_TS_MASK) << offset)  #format is 0bCddddddd C:continuatian bit, d 7 bits of data
             offset += 7
         TC = (header & LTS1_TC_MASK) >> LTS1_TC_OFFSET
 
@@ -188,18 +210,63 @@ def lts_packet_handler(header):
             
     
 def ext_packet_handler(header):
-    print("EXT packet: TODO")
+    data_buf = []
+    data_buf.append( toInt(ser.read(1)))
+    while (data_buf[-1] & LTS_CBIT_MASK):
+        data_buf.append(toInt(ser.read(1)))
+    print("Extension pckt, bytes read = ", len(data_buf) ," TODO analyze")
 
 def gts_packet_handler(header):
-    print("GTS packet: TODO")
+    data_buf = []
+    data_buf.append( toInt(ser.read(1)))
+    while (data_buf[-1] & LTS_CBIT_MASK):
+        data_buf.append(toInt(ser.read(1)))
+    print("GTS pckt, bytes read = ", len(data_buf) ," TODO analyze")
+
+
 def hw_packet_handler(header):
-    print("HW packet: TO")
+    #TODO read and assemble payload first, size bits are always there
+    if header == HW_EXCEPTION_HEADER:
+        ser.read(2)
+        print("DWT Exception pckt. 2bytes read. TODO: analyze")
+        return
+    
+    if header == HW_PC_PER_HEADER:
+        ser.read(4)
+        print("DWT Periodic PC pckt. 4 bytes read .TODO: analyze")
+        return
+    
+    if header == HW_PC_PER_SLP_HEADER:
+        ser.read(2)
+        print("DWT Periodic PC sleep mode pckt. 2 bytes read .TODO: analyze")
+        return
+    
+    if (header & HW_PC_ADDR_MASK) == HW_PC_HEADER:
+        ser.read(4)
+        print("DWT Normal PC pckt. 4 bytes read .TODO: analyze")
+        return
+    
+    if (header & HW_PC_ADDR_MASK) == HW_DATA_ADDR_MASK:
+        ser.read(2)
+        print("DWT Data address pckt. 2 bytes read .TODO: analyze")
+        return
+    
+    if (header & HW_DATA_VALUE_MASK) == HW_DATA_VALUE_HEADER:
+        len = header & SRC_SIZE_MASK               #Size is same for all source packets (HW and Instrumentation)
+        rw = (header & HW_DATA_RW_MASK) >> HW_DATA_RW_OFFSET 
+
+        ser.read(len)
+        print("DWT Data value pckt. ",len ," bytes read. R/W: ",rw, " TODO: analyze")
+        return
+
 def inst_packet_handler(header):
-    print("Instrumentation packet: TODO")
+    len = header & SRC_SIZE_MASK               #Size is same for all source packets (HW and Instrumentation)
+    ser.read(len)
+    print("Instrumentation pckt. Byts read: ",len ," TODO: analyze")
     
 # Serial port configuration
 #ser = serial.Serial('COM4', 115200)  # Change COM1 to the appropriate port and 9600 to the correct baudrate
-ser = open("putty_example.log","rb")
+ser = open("swo_parser/putty_example.log","rb")
 
 try:
     while True:
@@ -229,7 +296,7 @@ try:
         if p_type == packet_types.INST :
             inst_packet_handler(header_byte)
         if p_type == packet_types.ERR :
-            print("Error, invalid header: ",bytes(header_byte))
+            print("Error, invalid header: ",hex(header_byte))
 
         
 except KeyboardInterrupt:
