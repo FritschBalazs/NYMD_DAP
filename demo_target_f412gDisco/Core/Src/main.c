@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,7 +100,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  setup_TRACE();
+  //setup_TRACE();  //manual setup for testing wtih NYMD dap
+
 
   //turn off LEDs
   HAL_GPIO_WritePin( LED1_GRE_GPIO_Port,  LED1_GRE_Pin, GPIO_PIN_SET);
@@ -108,7 +109,7 @@ int main(void)
   HAL_GPIO_WritePin( LED3_RED_GPIO_Port,  LED3_RED_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin( LED4_BLU_GPIO_Port,  LED4_BLU_Pin, GPIO_PIN_SET);
 
-
+  printf(" Demo target for NYMD_DAP project.\r\n");
 
   /* USER CODE END 2 */
 
@@ -337,6 +338,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+int __io_putchar(int ch){
+	ITM_SendChar(ch);
+	return ch;
+}
+
 void setup_TRACE(void){
   uint32_t cpuCoreFreqHz = 100000000; // 100 MHz
   uint32_t SWOSpeed = 115200; // 115200 baud rate

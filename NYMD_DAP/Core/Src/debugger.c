@@ -353,23 +353,25 @@ void APP_Run(void){
 
 	/* if HS transmit failed in callback try again here */
 	if (SWO_buff_overrun_ERR){
-		if (CDC_Transmit_HS("ERR: Buffer overrun occured \n", 30) == USBD_OK){
+		//if (CDC_Transmit_HS("ERR: Buffer overrun occured \n", 30) == USBD_OK){ //TODO cleanup
+		if(printf("SWO buffer overrun ")){
 			SWO_buff_overrun_ERR = 0;
 			SWO_buff_empty = 1;
 		}
 		else{
-			printf("SWO buffer overrun ");
+			//printf("SWO buffer overrun ");
 		}
 
 	}
 
 	if(CDC_Tx_ERR){
-		if (CDC_Transmit_HS("CDC TX error occured \n", 23) == USBD_OK){
+		//if (CDC_Transmit_HS("CDC TX error occured \n", 23) == USBD_OK){
+		if(printf("CDC TX error occured \n")){
 			CDC_Tx_ERR = 0;
 			SWO_buff_empty = 1;
 		}
 		else{
-			printf("CDC TX error occured \n");
+			//printf("CDC TX error occured \n");
 		}
 	}
 

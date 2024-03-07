@@ -162,7 +162,8 @@ int main(void)
 
 
   //printf("\r\n");
-  printf(__DATE__" " __TIME__"\r\n");
+  printf(" NYMD DAP, running in HID mode\r\n");
+  printf("Build: "__DATE__" " __TIME__"\r\n");
   APP_Setup();
 
   //HAL_UART_Receive_DMA(&huart1, debug_buffer, 12);
@@ -237,7 +238,10 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+int __io_putchar(int ch){
+	ITM_SendChar(ch);
+	return ch;
+}
 /* USER CODE END 4 */
 
 /**
