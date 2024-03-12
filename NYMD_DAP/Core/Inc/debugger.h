@@ -11,6 +11,10 @@
 #include "main.h"
 #include "usbd_customhid.h"
 
+
+#define UART6_DEBUG  //UART 6, used for debugging proposes, CN4
+//#define UART6_PASSTROUGH  //TODO uart6 passtrough
+
 enum USBD_HID_REQ_t {
 	USBD_HID_REQ_EP_CTRL = 0,
 	USBD_HID_REQ_EP_INT,

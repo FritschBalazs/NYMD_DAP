@@ -32,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define JOY_BOUNCE_VAL 10
+#define JOY_BOUNCE_VAL 100
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -100,7 +100,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  //setup_TRACE();  //manual setup for testing wtih NYMD dap
+  setup_TRACE();  //manual setup for testing wtih NYMD dap
 
 
   //turn off LEDs
@@ -153,13 +153,13 @@ int main(void)
 		  uart_sendonce_dwn = 0;
 	  }
 
-	  if((HAL_GetTick() % 500) <= 10){
+	  if((HAL_GetTick() % 500) <= 1){
 		  HAL_GPIO_TogglePin( LED4_BLU_GPIO_Port,  LED4_BLU_Pin);
 		  HAL_GPIO_TogglePin( LED2_ORG_GPIO_Port,  LED2_ORG_Pin);
 		  HAL_UART_Transmit( &huart2,  data,  5,  1000 );
 	  }
 
-	  HAL_Delay(10);
+	  HAL_Delay(1);
 
 
 

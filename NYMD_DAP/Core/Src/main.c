@@ -146,13 +146,6 @@ int main(void)
   }
 
 
-  //retval = USBD_Start(&hUsbDeviceHS);
-  if ( retval != USBD_OK)
-  {
-	  Error_Handler();
-  }
-
-
   retval = USBD_Start(&hUsbDeviceHS);
   if ( retval != USBD_OK)
   {
@@ -162,7 +155,7 @@ int main(void)
 
 
   //printf("\r\n");
-  printf(" NYMD DAP, running in HID mode\r\n");
+  printf("NYMD DAP, running in HID mode\r\n");
   printf("Build: "__DATE__" " __TIME__"\r\n");
   APP_Setup();
 
@@ -238,10 +231,12 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+#ifdef UART6_DEBUG
 int __io_putchar(int ch){
-	ITM_SendChar(ch);
+	HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
 	return ch;
 }
+#endif
 /* USER CODE END 4 */
 
 /**

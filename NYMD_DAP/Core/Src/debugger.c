@@ -18,6 +18,7 @@
 #define USB_HID_BUSY_USER_TIMEOUT (2U)
 #define SWO_CAPTURE_BUFF_SIZE (1*4*8)  //4 word FIFO with byte packing
 
+
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
@@ -354,25 +355,18 @@ void APP_Run(void){
 	/* if HS transmit failed in callback try again here */
 	if (SWO_buff_overrun_ERR){
 		//if (CDC_Transmit_HS("ERR: Buffer overrun occured \n", 30) == USBD_OK){ //TODO cleanup
-		if(printf("SWO buffer overrun ")){
-			SWO_buff_overrun_ERR = 0;
-			SWO_buff_empty = 1;
-		}
-		else{
-			//printf("SWO buffer overrun ");
-		}
+		printf("SWO buffer overrun \r\n");
+		SWO_buff_overrun_ERR = 0;
+		SWO_buff_empty = 1;
+
 
 	}
 
 	if(CDC_Tx_ERR){
 		//if (CDC_Transmit_HS("CDC TX error occured \n", 23) == USBD_OK){
-		if(printf("CDC TX error occured \n")){
-			CDC_Tx_ERR = 0;
-			SWO_buff_empty = 1;
-		}
-		else{
-			//printf("CDC TX error occured \n");
-		}
+		printf("CDC TX error occured \r\n");
+		CDC_Tx_ERR = 0;
+		SWO_buff_empty = 1;
 	}
 
 	//CDC testcode

@@ -1,4 +1,4 @@
-#import serial
+import serial
 from enum import Enum
 
 
@@ -95,6 +95,15 @@ HW_DATA_VALUE_MASK      = 0xc4  #data value, without size bits
 HW_DATA_VALUE_HEADER    = 0x84  #data value, without size
 HW_DATA_RW_MASK         = 0x08  #bit 3. 0=read
 HW_DATA_RW_OFFSET       = 3
+
+
+# Define some ANSI escape codes for console colors
+class colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    RESET = '\033[0m'  # Reset to default color
 
 
 #Helper to convert bytes object to int
@@ -247,26 +256,37 @@ def hw_packet_handler(header):
         return
     
     if (header & HW_PC_ADDR_MASK) == HW_DATA_ADDR_MASK:
-        ser.read(2)
-        print("DWT Data address pckt. 2 bytes read .TODO: analyze")
+        #ser.read(2)
+        payload = get_payload(2)
+        print(colors.GREEN , "DWT Data address pckt. 2 bytes . CMP: TODO. Payload: ",payload , colors.RESET)
         return
     
     if (header & HW_DATA_VALUE_MASK) == HW_DATA_VALUE_HEADER:
         len = header & SRC_SIZE_MASK               #Size is same for all source packets (HW and Instrumentation)
         rw = (header & HW_DATA_RW_MASK) >> HW_DATA_RW_OFFSET 
 
-        ser.read(len)
-        print("DWT Data value pckt. ",len ," bytes read. R/W: ",rw, " TODO: analyze")
+        #ser.read(len)
+        payload = get_payload(len)
+        print(colors.RED , "DWT Data value pckt. ",len ," bytes. R/W: ",rw, "CMP:TODO. Payload: ",payload , colors.RESET)
         return
 
 def inst_packet_handler(header):
     len = header & SRC_SIZE_MASK               #Size is same for all source packets (HW and Instrumentation)
     ser.read(len)
     print("Instrumentation pckt. Byts read: ",len ," TODO: analyze")
+
+def get_payload(len):
+    data = 0
+    offset = 0
+    for x in range(0,len):
+        data |= toInt(ser.read(1)) << offset
+        offset += 8
+    return data
     
 # Serial port configuration
-#ser = serial.Serial('COM4', 115200)  # Change COM1 to the appropriate port and 9600 to the correct baudrate
-ser = open("swo_parser/putty_example.log","rb")
+ser = serial.Serial('COM4', 115200)  # Change COM1 to the appropriate port and 9600 to the correct baudrate
+#ser = open("putty_example_2_noJunk.log","rb")
+#ser = open("putty_example_cap_by_stlink_uart.log","rb")
 
 try:
     while True:
