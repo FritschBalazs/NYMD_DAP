@@ -54,8 +54,7 @@
 									<listOptionValue builtIn="false" value="../Middlewares_m/STM32_USB_Device_Library/Class/CompositeBuilder/Inc"/>
 									<listOptionValue builtIn="false" value="../Middlewares_m/STM32_USB_Device_Library/Class/CustomHID/Inc"/>
 									<listOptionValue builtIn="false" value="../Middlewares_m/STM32_USB_Device_Library/Core/Inc"/>
-									<listOptionValue builtIn="false" value="../USB_DEVICE/App/Inc"/>
-									<listOptionValue builtIn="false" value="../USB_DEVICE/Target/Inc"/>
+									<listOptionValue builtIn="false" value="../USB_DEVICE/Inc"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1163748537" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -82,9 +81,9 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Middlewares_m"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Middlewares_m"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="USB_DEVICE"/>
 					</sourceEntries>
 				</configuration>
