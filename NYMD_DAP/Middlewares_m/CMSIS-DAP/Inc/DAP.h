@@ -28,7 +28,7 @@
 #ifndef __DAP_H__
 #define __DAP_H__
 
-#define  DAP_FW_V1
+//#define  DAP_FW_V1
 
 // DAP Firmware Version
 #ifdef  DAP_FW_V1

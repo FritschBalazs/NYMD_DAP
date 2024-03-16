@@ -180,7 +180,7 @@ void capture_SWO_init(void){
 }
 
 HAL_StatusTypeDef SWO_setspeed(){
-
+	return HAL_ERROR;  //TODO SWO_setspeed
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
@@ -269,6 +269,7 @@ uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len){
 		printf("Remote wakeup \r\n");
 	}
 */
+#ifdef USE_USBD_COMPOSITE
 
 	if (USBD_CUSTOM_HID_SendReport(pdev, report, len, CUSTOMHID_InstID) == CUSTOM_HID_BUSY){
 		uint32_t timestamp = HAL_GetTick();
@@ -276,7 +277,14 @@ uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len){
 			//wait
 		}
 	}
-
+#else
+	if (USBD_CUSTOM_HID_SendReport(pdev, report, len) == CUSTOM_HID_BUSY){
+		uint32_t timestamp = HAL_GetTick();
+		while(USBD_CUSTOM_HID_SendReport(pdev, report, len) != USBD_OK && (timestamp + USB_HID_BUSY_USER_TIMEOUT >= HAL_GetTick())){
+			//wait
+		}
+	}
+#endif
 	return 0;
 
 }
