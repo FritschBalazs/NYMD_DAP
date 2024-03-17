@@ -51,3 +51,17 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#debug folders
+/demo_target_f412gDisco/Debug
+/NYMD_DAP/Debug
+
+#unnecesarry project settings
+/demo_target_f412gDisco/.settings
+/NYMD_DAP/.settings
+
+#launch configs
+*.launch
+
+#test.py
+/swo_parser/test.py
