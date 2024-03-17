@@ -26,7 +26,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include  "usbd_ioreq.h"
-
+#include "DAP_config.h"
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
   */
@@ -42,9 +42,9 @@ extern "C" {
   */
 #define DAP_V2_IF_NUM				0x00U //0x01U
 #define EPOUT_ADDR_SWD				0x01U
-#define EPOUT_SIZE_SWD				0x10U
+#define EPOUT_SIZE_SWD				0x200U  //TODO figure out endpoint sizes
 #define EPIN_ADDR_SWD               0x81U
-#define EPIN_SIZE_SWD               0x10U
+#define EPIN_SIZE_SWD               0x200U
 #define EPIN_ADDR_SWO				0x82U
 #define EPIN_SIZE_SWO				0x10U
 
@@ -77,6 +77,11 @@ extern "C" {
   * @{
   */
 extern USBD_ClassTypeDef USBD_TEMPLATE_ClassDriver;
+extern uint8_t bulk_interm_buf_SWD_EpOut[DAP_PACKET_SIZE];
+//extern uint8_t bulk_interm_buf_SWD_EpIn[DAP_PACKET_SIZE]; //TODO delet if not needed
+
+
+
 /**
   * @}
   */
@@ -84,6 +89,9 @@ extern USBD_ClassTypeDef USBD_TEMPLATE_ClassDriver;
 /** @defgroup USB_CORE_Exported_Functions
   * @{
   */
+uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf);
+uint8_t  USBD_TEMPLATE_Transmit_SWO(USBD_HandleTypeDef *pdev, uint8_t* buf, uint16_t length);
+
 /**
   * @}
   */

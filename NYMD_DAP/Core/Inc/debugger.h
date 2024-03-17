@@ -27,10 +27,13 @@ enum USB_HID_REPORT_TYP_t {
 	HID_REPORT_OUTPUT,
 };
 
+
+
 int32_t HID0_GetReport (uint8_t rtype, uint8_t req, uint8_t rid, uint8_t *buf);
 bool HID0_SetReport (uint8_t rtype, uint8_t req, uint8_t rid, const uint8_t *buf, int32_t len);
 uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len);
-
+uint32_t DAP_BulkSaveDataOut(const uint8_t *buf, uint32_t len);
+uint8_t* DAP_GetNexResponse(void);
 
 void DAP_USB_Initialize (void);
 

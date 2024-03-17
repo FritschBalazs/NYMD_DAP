@@ -37,9 +37,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_custom_bulk.h"
-
 #include "usbd_ctlreq.h"
-
+#include "debugger.h"
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
   */
@@ -61,6 +60,7 @@
 /** @defgroup USBD_TEMPLATE_Private_Defines
   * @{
   */
+#define EP_ADDR_7F_MASK (0x7Fu)
 
 /**
   * @}
@@ -204,6 +204,13 @@ __ALIGN_BEGIN static uint8_t USBD_TEMPLATE_DeviceQualifierDesc[USB_LEN_DEV_QUALI
   * @}
   */
 
+bool data_in_busy_EP_SWD = false;  //TO indicate if DataOut on sWD endpoint is ongoing
+bool data_in_busy_EP_SWO = false;  //TO indicate if DataOut on SWO endpoint is ongoing
+
+uint8_t bulk_interm_buf_SWD_EpOut[DAP_PACKET_SIZE]; //TODO figure out intermediate buffer sizes
+//uint8_t bulk_interm_buf_SWD_EpIn[DAP_PACKET_SIZE];//TODO delet if not needed
+
+
 /** @defgroup USBD_TEMPLATE_Private_Functions
   * @{
   */
@@ -218,6 +225,12 @@ __ALIGN_BEGIN static uint8_t USBD_TEMPLATE_DeviceQualifierDesc[USB_LEN_DEV_QUALI
 static uint8_t USBD_TEMPLATE_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
 
+  USBD_LL_OpenEP(pdev, EPOUT_ADDR_SWD, USBD_EP_TYPE_BULK, EPOUT_SIZE_SWD);
+  USBD_LL_OpenEP(pdev, EPIN_ADDR_SWD, USBD_EP_TYPE_BULK, EPIN_SIZE_SWD);
+  USBD_LL_OpenEP(pdev, EPIN_ADDR_SWO, USBD_EP_TYPE_BULK, EPIN_SIZE_SWO);
+  USBD_LL_PrepareReceive(pdev, EPOUT_ADDR_SWD, bulk_interm_buf_SWD_EpOut, DAP_ID_PACKET_SIZE);
+
+
   return (uint8_t)USBD_OK;
 }
 
@@ -230,7 +243,9 @@ static uint8_t USBD_TEMPLATE_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   */
 static uint8_t USBD_TEMPLATE_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
-
+  USBD_LL_CloseEP(pdev, EPOUT_ADDR_SWD);
+  USBD_LL_CloseEP(pdev, EPIN_ADDR_SWD);
+  USBD_LL_CloseEP(pdev, EPIN_ADDR_SWO);
   return (uint8_t)USBD_OK;
 }
 
@@ -343,15 +358,39 @@ uint8_t *USBD_TEMPLATE_GetDeviceQualifierDesc(uint16_t *length)
 
 /**
   * @brief  USBD_TEMPLATE_DataIn
-  *         handle data IN Stage
+  *         handle data IN Stage.
   * @param  pdev: device instance
   * @param  epnum: endpoint index
   * @retval status
   */
 static uint8_t USBD_TEMPLATE_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+  // A bulk transfer is complete when the endpoint does on of the following:
+  // - Has transferred exactly the amount of data expected
+  // - Transfers a packet with a payload size less than wMaxPacketSize or transfers a zero-length packet
+  if (pdev->ep_in[epnum].total_length && !(pdev->ep_in[epnum].total_length % USB_HS_MAX_PACKET_SIZE))
+  {
+	pdev->ep_in[epnum].total_length = 0;
+	USBD_LL_Transmit(pdev, epnum, NULL, 0);
+  }
+  else{
+	if (epnum == (EPIN_ADDR_SWD & EP_ADDR_7F_MASK)){
+		/* set flag to inidcate endpoint is free */
+		data_in_busy_EP_SWD = false;
 
-  return (uint8_t)USBD_OK;
+		/* Check if an other response is pending */
+		uint8_t* buf = DAP_GetNexResponse();
+		if (buf != NULL){
+			USBD_TEMPLATE_Transmit_SWD(pdev,buf);
+		}
+	}
+
+  	if (epnum == (EPIN_ADDR_SWO & EP_ADDR_7F_MASK)){
+		data_in_busy_EP_SWO = false;
+		//TODO add SWO transmit next?
+	}
+  }
+  return USBD_OK;
 }
 
 /**
@@ -424,11 +463,48 @@ static uint8_t USBD_TEMPLATE_IsoOutIncomplete(USBD_HandleTypeDef *pdev, uint8_t 
   */
 static uint8_t USBD_TEMPLATE_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+  uint32_t const bytes_received = USBD_LL_GetRxDataSize(pdev, epnum);
+  if (bytes_received == 0){
+	  while(1);
+  }
+  DAP_BulkSaveDataOut(bulk_interm_buf_SWD_EpOut, DAP_ID_PACKET_SIZE);    //TODO check if we have to copy entire block, or just bytes_received
+  USBD_LL_PrepareReceive(pdev, EPOUT_ADDR_SWD, bulk_interm_buf_SWD_EpOut, DAP_ID_PACKET_SIZE);
+  return USBD_OK;
 
   return (uint8_t)USBD_OK;
 }
+/**
+  * @brief  USBD_TEMPLATE_Transmit
+  *         handle DataIn commands
+  * @param  pdev: device instance
+  * @param  buf: buffer containing the data
+  * @param  length: number of bytes to be transmitted
+  * @retval status
+  *
+  * @note This should be in an ...if.c file by ST convention.
+  */
+uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf)
+{
 
+  if (data_in_busy_EP_SWD){
+    return USBD_BUSY;
+  }
+  else{
+	  data_in_busy_EP_SWD = true;
+  	  pdev->ep_in[EPIN_ADDR_SWD & EP_ADDR_7F_MASK ].total_length = DAP_PACKET_SIZE;
+  	  return USBD_LL_Transmit(pdev, EPIN_ADDR_SWD, buf, DAP_PACKET_SIZE);
+  }
+}
 
+uint8_t  USBD_TEMPLATE_Transmit_SWO(USBD_HandleTypeDef *pdev, uint8_t* buf, uint16_t length)
+{
+  if (data_in_busy_EP_SWO)
+    return USBD_BUSY;
+  data_in_busy_EP_SWO = true;
+  //TODO copy SWD data before trasmition. Not necessearly here
+  pdev->ep_in[EPIN_ADDR_SWD & EP_ADDR_7F_MASK ].total_length = length;
+  return USBD_LL_Transmit(pdev, EPIN_ADDR_SWO, buf, length);
+}
 
 /**
   * @}
