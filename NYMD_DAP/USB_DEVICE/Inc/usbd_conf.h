@@ -35,7 +35,7 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include "DAP.h"
+#include "DAP_config.h"
 
 #ifdef DAP_FW_V1
 /* Activate the IAD option */

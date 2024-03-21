@@ -27,6 +27,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_conf.h"
 #include "DAP.h"
+#include "DAP_config.h"
 /** @addtogroup STM32_USBD_DEVICE_LIBRARY
   * @{
   */

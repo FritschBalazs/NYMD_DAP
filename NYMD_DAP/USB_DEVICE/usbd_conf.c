@@ -25,7 +25,7 @@
 #include "usbd_core.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "DAP_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

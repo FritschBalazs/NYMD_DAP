@@ -39,6 +39,7 @@
 #include "usbd_custom_bulk.h"
 #include "usbd_ctlreq.h"
 #include "debugger.h"
+#include "DAP_config.h"
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
   */
@@ -126,11 +127,11 @@ USBD_ClassTypeDef USBD_TEMPLATE_ClassDriver =
 #pragma data_alignment=4
 #endif /* __ICCARM__ */
 /* USB TEMPLATE device Configuration Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_TEMPLATE_CfgDesc[USB_CONFIG_DESC_SIZ] __ALIGN_END =
+__ALIGN_BEGIN static uint8_t USBD_TEMPLATE_CfgDesc[USB_CONFIG_DESC_SIZE] __ALIGN_END =
 {
   0x09, /* bLength: Configuration Descriptor size */
   USB_DESC_TYPE_CONFIGURATION, /* bDescriptorType: Configuration */
-  USB_CONFIG_DESC_SIZ, /* wTotalLength: Bytes returned */
+  USB_CONFIG_DESC_SIZE, /* wTotalLength: Bytes returned */
   0x00,
   0x01,         /*bNumInterfaces: 1 interface*/
   0x01,         /*bConfigurationValue: Configuration value*/
@@ -208,7 +209,6 @@ bool data_in_busy_EP_SWD = false;  //TO indicate if DataOut on sWD endpoint is o
 bool data_in_busy_EP_SWO = false;  //TO indicate if DataOut on SWO endpoint is ongoing
 
 uint8_t bulk_interm_buf_SWD_EpOut[DAP_PACKET_SIZE]; //TODO figure out intermediate buffer sizes
-//uint8_t bulk_interm_buf_SWD_EpIn[DAP_PACKET_SIZE];//TODO delet if not needed
 
 
 /** @defgroup USBD_TEMPLATE_Private_Functions
@@ -491,7 +491,7 @@ uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf)
   }
   else{
 	  data_in_busy_EP_SWD = true;
-  	  pdev->ep_in[EPIN_ADDR_SWD & EP_ADDR_7F_MASK ].total_length = DAP_PACKET_SIZE;
+  	  pdev->ep_in[EPIN_ADDR_SWD & EP_ADDR_7F_MASK ].total_length = DAP_PACKET_SIZE; //TODO ezt a -1 dolgot mindnekepp tavolitsd el
   	  return USBD_LL_Transmit(pdev, EPIN_ADDR_SWD, buf, DAP_PACKET_SIZE);
   }
 }

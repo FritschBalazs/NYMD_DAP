@@ -15,7 +15,6 @@
 #include "usbd_cdc_if.h"
 #include "usart.h"
 #include "usbd_custom_bulk.h"
-
 #define USB_HID_BUSY_USER_TIMEOUT (2U)
 #define SWO_CAPTURE_BUFF_SIZE (1*4*8)  //4 word FIFO with byte packing
 
@@ -430,7 +429,7 @@ void APP_Setup(void){
 	LED_RUNNING_OUT(1U);                  // Turn on  Target Running LED
 	Delayms(500U);                        // Wait for 500ms
 	LED_RUNNING_OUT(0U);                  // Turn off Target Running LED
-	LED_CONNECTED_OUT(0U);                // Turn off Debugger Connected LED //TODO connect LED
+	LED_CONNECTED_OUT(0U);                // Turn off Debugger Connected LED //TODO figure out why not blinking
 
 	DAP_USB_Initialize();  				  //initialize DAP communication buffers and flags
 

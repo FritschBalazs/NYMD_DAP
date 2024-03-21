@@ -33,6 +33,7 @@
 #include "usbd_cdc_if.h"
 #include "usbd_custom_bulk.h"
 #include "circ_buf.h"
+#include "DAP_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

@@ -30,8 +30,21 @@
 
 #include "main.h"
 #include "gpio.h"
+//#include "usbd_def.h" //TODO delete after debugged properly
 
+/* Switch between CMSIS-DAP versions
+ * It also switches between the too main USB implementatins
+ * Bulk (supported in v2) and HID (supported in V1.3) implemnetation
+ */
+//#define  DAP_FW_V1
 
+/* OpenOCD avoids using ZLP to terminate transfers, and doesn't function properly
+ * if the device sends them. -> if the following is defined, DAP packet size is reduced
+ * by one, to avoid the need to send ZLP.
+ */
+#ifndef DAP_FW_V1
+#define OPENOCD_NO_ZLP
+#endif  /* DAP_FW_V1 */
 
 //**************************************************************************************************
 /**
@@ -57,7 +70,7 @@ This information includes:
 
 /// Processor Clock of the Cortex-M MCU used in the Debug Unit.
 /// This value is used to calculate the SWD/JTAG clock speed.
-#define CPU_CLOCK              200000000U      ///< Specifies the CPU Clock in Hz.
+#define CPU_CLOCK              180000000U      ///< Specifies the CPU Clock in Hz.
 
 /// Number of processor cycles for I/O Port write operations.
 /// This value is used to calculate the SWD/JTAG clock speed that is generated with I/O
