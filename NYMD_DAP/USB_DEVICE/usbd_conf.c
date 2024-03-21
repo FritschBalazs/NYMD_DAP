@@ -416,10 +416,10 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 
 #ifdef DAP_FW_V1    /* CDC+HID setup */
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x200);      //TODO figure out size
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x80);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);    //This should be incorrect if my math is correct,
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x100);   // but if I set all to 0x80 it doesn't work
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 2, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 3, 0x80);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 3, 0x100);
 #else				/* Bulk endpoint setup */
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 1024 / 4);      /* all OUT endpoint compined */
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 1024 / 4);   /* in endpoint 0 */

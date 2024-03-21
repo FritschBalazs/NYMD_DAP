@@ -30,13 +30,13 @@
 
 #include "main.h"
 #include "gpio.h"
-//#include "usbd_def.h" //TODO delete after debugged properly
+//#include "usbd_def.h" //TODO (longterm) figure out why incluiding this breaks everything
 
 /* Switch between CMSIS-DAP versions
- * It also switches between the too main USB implementatins
- * Bulk (supported in v2) and HID (supported in V1.3) implemnetation
+ * It also switches between the too main USB implementations
+ * Bulk (supported in v2) and HID (supported in V1.3) implementation
  */
-//#define  DAP_FW_V1
+//#define  DAP_FW_V1  //TODO test HID version
 
 /* OpenOCD avoids using ZLP to terminate transfers, and doesn't function properly
  * if the device sends them. -> if the following is defined, DAP packet size is reduced
@@ -105,7 +105,19 @@ This information includes:
 /// This configuration settings is used to optimize the communication performance with the
 /// debugger and depends on the USB peripheral. Typical vales are 64 for Full-speed USB HID or WinUSB,
 /// 1024 for High-speed USB HID and 512 for High-speed USB WinUSB.
-#define DAP_PACKET_SIZE         512U            ///< Specifies Packet Size in bytes. //TODO figure out packet sizes
+#ifdef DAP_FW_V1
+
+#define DAP_PACKET_SIZE   1024
+
+#else /* (#ifdef DAP_FW_V1) */
+
+#ifdef OPENOCD_NO_ZLP
+#define DAP_PACKET_SIZE         (USB_OTG_HS_MAX_PACKET_SIZE-1)           ///< Specifies Packet Size in bytes.
+#else /* ( #ifdef OPENOCD_NO_ZLP ) */
+#define DAP_PACKET_SIZE         (USB_OTG_HS_MAX_PACKET_SIZE)            ///< Specifies Packet Size in bytes.
+#endif /* ( #ifdef OPENOCD_NO_ZLP ) */
+
+#endif /* (#ifdef DAP_FW_V1) */
 
 /// Maximum Package Buffers for Command and Response data.
 /// This configuration settings is used to optimize the communication performance with the

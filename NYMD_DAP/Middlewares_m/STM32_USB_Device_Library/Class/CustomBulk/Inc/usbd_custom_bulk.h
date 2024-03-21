@@ -42,9 +42,9 @@ extern "C" {
   */
 #define DAP_V2_IF_NUM				0x00U
 #define EPOUT_ADDR_SWD				0x01U
-#define EPOUT_SIZE_SWD				USB_HS_MAX_PACKET_SIZE
+#define EPOUT_SIZE_SWD				USB_OTG_HS_MAX_PACKET_SIZE
 #define EPIN_ADDR_SWD               0x81U
-#define EPIN_SIZE_SWD               USB_HS_MAX_PACKET_SIZE
+#define EPIN_SIZE_SWD               USB_OTG_HS_MAX_PACKET_SIZE
 #define EPIN_ADDR_SWO				0x82U
 #define EPIN_SIZE_SWO				0x10U   //TODO add SWO over bulk func.
 
