@@ -36,15 +36,9 @@
  * It also switches between the too main USB implementations
  * Bulk (supported in v2) and HID (supported in V1.3) implementation
  */
-//#define  DAP_FW_V1  //TODO test HID version
+//#define  DAP_FW_V1
 
-/* OpenOCD avoids using ZLP to terminate transfers, and doesn't function properly
- * if the device sends them. -> if the following is defined, DAP packet size is reduced
- * by one, to avoid the need to send ZLP.
- */
-#ifndef DAP_FW_V1
-#define OPENOCD_NO_ZLP
-#endif  /* DAP_FW_V1 */
+
 
 //**************************************************************************************************
 /**
@@ -106,17 +100,9 @@ This information includes:
 /// debugger and depends on the USB peripheral. Typical vales are 64 for Full-speed USB HID or WinUSB,
 /// 1024 for High-speed USB HID and 512 for High-speed USB WinUSB.
 #ifdef DAP_FW_V1
-
 #define DAP_PACKET_SIZE   1024
-
-#else /* (#ifdef DAP_FW_V1) */
-
-#ifdef OPENOCD_NO_ZLP
-#define DAP_PACKET_SIZE         (USB_OTG_HS_MAX_PACKET_SIZE-1)           ///< Specifies Packet Size in bytes.
-#else /* ( #ifdef OPENOCD_NO_ZLP ) */
+#else
 #define DAP_PACKET_SIZE         (USB_OTG_HS_MAX_PACKET_SIZE)            ///< Specifies Packet Size in bytes.
-#endif /* ( #ifdef OPENOCD_NO_ZLP ) */
-
 #endif /* (#ifdef DAP_FW_V1) */
 
 /// Maximum Package Buffers for Command and Response data.

@@ -88,7 +88,7 @@ extern uint8_t bulk_interm_buf_SWD_EpOut[DAP_PACKET_SIZE];
 /** @defgroup USB_CORE_Exported_Functions
   * @{
   */
-uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf);
+uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf, uint32_t length);
 uint8_t  USBD_TEMPLATE_Transmit_SWO(USBD_HandleTypeDef *pdev, uint8_t* buf, uint16_t length);
 
 /**

@@ -65,7 +65,7 @@
 #define USBD_VID     0x0483
 #define USBD_LANGID_STRING     0x409
 #define USBD_MANUFACTURER_STRING     "STMicroelectronics"
-#define USBD_PID_HS     0x5752  //og: 0x5750
+#define USBD_PID_HS     0x5750  //og: 0x5750
 #ifdef DAP_FW_V1
 	#define USBD_PRODUCT_STRING_HS     "NYMD_DAP V1.3"
 	#define USBD_CONFIGURATION_STRING_HS     "HID+CDC"

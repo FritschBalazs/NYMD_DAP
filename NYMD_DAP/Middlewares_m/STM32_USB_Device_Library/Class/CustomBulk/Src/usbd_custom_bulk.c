@@ -379,9 +379,10 @@ static uint8_t USBD_TEMPLATE_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 		data_in_busy_EP_SWD = false;
 
 		/* Check if an other response is pending */
-		uint8_t* buf = DAP_GetNexResponse();
+		uint32_t length = 0;
+		uint8_t* buf = DAP_GetNexResponse(&length);
 		if (buf != NULL){
-			USBD_TEMPLATE_Transmit_SWD(pdev,buf);
+			USBD_TEMPLATE_Transmit_SWD(pdev,buf,length);
 		}
 	}
 
@@ -483,7 +484,7 @@ static uint8_t USBD_TEMPLATE_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
   *
   * @note This should be in an ...if.c file by ST convention.
   */
-uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf)
+uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf, uint32_t length)
 {
 
   if (data_in_busy_EP_SWD){
@@ -491,8 +492,8 @@ uint8_t  USBD_TEMPLATE_Transmit_SWD(USBD_HandleTypeDef *pdev, uint8_t* buf)
   }
   else{
 	  data_in_busy_EP_SWD = true;
-  	  pdev->ep_in[EPIN_ADDR_SWD & EP_ADDR_7F_MASK ].total_length = DAP_PACKET_SIZE; //TODO ezt a -1 dolgot mindnekepp tavolitsd el
-  	  return USBD_LL_Transmit(pdev, EPIN_ADDR_SWD, buf, DAP_PACKET_SIZE);
+  	  pdev->ep_in[EPIN_ADDR_SWD & EP_ADDR_7F_MASK ].total_length = length;
+  	  return USBD_LL_Transmit(pdev, EPIN_ADDR_SWD, buf, length);
   }
 }
 

@@ -37,6 +37,7 @@ static volatile uint8_t  USB_ResponseIdle;      // Response Idle  Flag
 
 static uint8_t  USB_Request [DAP_PACKET_COUNT][DAP_PACKET_SIZE];  // Request  Buffer (circular)
 static uint8_t  USB_Response[DAP_PACKET_COUNT][DAP_PACKET_SIZE];  // Response Buffer (circular)
+static uint16_t  USB_Response_Length[DAP_PACKET_COUNT];			  // To store length of each response
 
 bool REQUEST_FLAG = 0;			//unprocessed DAP request.
 bool BUFFER_FULL_FLAG = 0;
@@ -193,10 +194,11 @@ uint32_t DAP_BulkSaveDataOut(const uint8_t *buf, uint32_t len){ //TODO cleanup l
 }
 
 /* @brief		Get the pointer for the next unsent Response, updates buffer indexes
+ * @param1		Return value for size
  * @retval     	Pointer to the next sendable packet.
  *             - value = NULL: no data to send
  */
-uint8_t* DAP_GetNexResponse(void){      						//TODO figure out if a copying could be saved,
+uint8_t* DAP_GetNexResponse(uint32_t* ret_size){      						//TODO figure out if a copying could be saved,
 	if (USB_ResponseCountI != USB_ResponseCountO) {  			//	either data can be directly transfered to periph
 		// save index to right element, increment Out index		//  or change the USB_Response circ buffer to semthing else
 		uint16_t n = USB_ResponseIndexO++;
@@ -205,6 +207,7 @@ uint8_t* DAP_GetNexResponse(void){      						//TODO figure out if a copying cou
 		}
 		USB_ResponseCountO++;
 
+		*ret_size = USB_Response_Length[n];
 		return USB_Response[n];
 	} else {
 		/* No pending response */
@@ -353,7 +356,19 @@ void APP_Run(void){
 		  }
 
 		  // Execute DAP Command (process request and prepare response)
-		  DAP_ExecuteCommand(USB_Request[USB_RequestIndexO], USB_Response[USB_ResponseIndexI]);
+		  uint32_t ret;
+		  ret = DAP_ExecuteCommand(USB_Request[USB_RequestIndexO], USB_Response[USB_ResponseIndexI]);
+		  USB_Response_Length[USB_ResponseIndexI] = (ret & 0x0000ffff); //lower 2bytes contain length of response
+		  if (USB_Response_Length[USB_ResponseIndexI] == DAP_PACKET_SIZE){
+			  while(1){
+				  LED_CONNECTED_OUT (0b1);
+				  LED_RUNNING_OUT(0b1);
+				  HAL_Delay(100);
+				  LED_CONNECTED_OUT (0b0);
+				  LED_RUNNING_OUT(0b0);
+				  HAL_Delay(100);
+			  }
+		  }
 
 		  // Update Request Index and Count
 		  USB_RequestIndexO++;
@@ -380,9 +395,9 @@ void APP_Run(void){
 			  USB_ResponseIdle = 0U;
 			  /* send data */
 #ifdef DAP_FW_V1
-			  HID_Send_Report(&hUsbDeviceHS, USB_Response[n], DAP_PACKET_SIZE);
+			  HID_Send_Report(&hUsbDeviceHS, USB_Response[n], DAP_PACKET_SIZE);  //TODO add length to other calls if there is any
 #else
-			  USBD_TEMPLATE_Transmit_SWD(&hUsbDeviceHS,USB_Response[n]);
+			  USBD_TEMPLATE_Transmit_SWD(&hUsbDeviceHS,USB_Response[n],USB_Response_Length[n]);
 #endif
 			}
 		  }
