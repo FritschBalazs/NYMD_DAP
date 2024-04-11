@@ -25,11 +25,12 @@
 #include "usbd_core.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "DAP_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define EP_ADDR_7F_MASK (0x7Fu)
 /* Private macro -------------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
@@ -405,17 +406,26 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_HS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 
-  /* og before I messd with it
+  /* og before I messed with it
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x200);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x174);*/
 
+  /* we have 4kB RAM in total, for all in and out endpoints.
+   * Tha function expects the allocated values as words (32bits). */
+
+#ifdef DAP_FW_V1    /* CDC+HID setup */
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x200);      //TODO figure out size
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x100);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);    //This should be incorrect if my math is correct,
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x100);   // but if I set all to 0x80 it doesn't work
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 2, 0x80);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 3, 0x100);
-
+#else				/* Bulk endpoint setup */
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 1024 / 4);      /* all OUT endpoint compined */
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 1024 / 4);   /* in endpoint 0 */
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 1024 / 4 );  /* in endpoint 1 */
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 2, 1024 / 4 );  /* in endpoint 2 */
+#endif
   }
   return USBD_OK;
 }
@@ -486,6 +496,9 @@ USBD_StatusTypeDef USBD_LL_OpenEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr, uin
 
   hal_status = HAL_PCD_EP_Open(pdev->pData, ep_addr, ep_mps, ep_type);
 
+#ifndef DAP_FW_V1
+  pdev->ep_in[ep_addr & EP_ADDR_7F_MASK].is_used = 1;
+#endif /* ( #ifndef DAP_FW_V1 ) */
   usb_status =  USBD_Get_USB_Status(hal_status);
 
   return usb_status;
@@ -503,7 +516,9 @@ USBD_StatusTypeDef USBD_LL_CloseEP(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   USBD_StatusTypeDef usb_status = USBD_OK;
 
   hal_status = HAL_PCD_EP_Close(pdev->pData, ep_addr);
-
+#ifndef DAP_FW_V1
+  pdev->ep_in[ep_addr & EP_ADDR_7F_MASK].is_used = 0;
+#endif /* ( #ifndef DAP_FW_V1 ) */
   usb_status =  USBD_Get_USB_Status(hal_status);
 
   return usb_status;

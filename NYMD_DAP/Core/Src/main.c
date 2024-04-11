@@ -31,7 +31,9 @@
 #include "usbd_desc.h"
 #include "usbd_custom_hid_if.h"
 #include "usbd_cdc_if.h"
+#include "usbd_custom_bulk.h"
 #include "circ_buf.h"
+#include "DAP_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -118,7 +120,7 @@ int main(void)
 
 
 
-
+#ifdef DAP_FW_V1
   /* Store CDC instance Class ID */
   CDC_InstID = hUsbDeviceHS.classId;
 
@@ -144,7 +146,10 @@ int main(void)
   {
 	  retval = USBD_CUSTOM_HID_RegisterInterface(&hUsbDeviceHS, &USBD_CustomHID_fops_HS);
   }
+#else
 
+  USBD_RegisterClass(&hUsbDeviceHS, &USBD_TEMPLATE_ClassDriver);
+#endif /* (#ifdef DAP_FW_V1 ) */
 
   retval = USBD_Start(&hUsbDeviceHS);
   if ( retval != USBD_OK)

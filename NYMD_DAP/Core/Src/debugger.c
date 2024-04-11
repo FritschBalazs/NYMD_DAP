@@ -14,7 +14,7 @@
 #include "DAP.h"
 #include "usbd_cdc_if.h"
 #include "usart.h"
-
+#include "usbd_custom_bulk.h"
 #define USB_HID_BUSY_USER_TIMEOUT (2U)
 #define SWO_CAPTURE_BUFF_SIZE (1*4*8)  //4 word FIFO with byte packing
 
@@ -37,6 +37,12 @@ static volatile uint8_t  USB_ResponseIdle;      // Response Idle  Flag
 
 static uint8_t  USB_Request [DAP_PACKET_COUNT][DAP_PACKET_SIZE];  // Request  Buffer (circular)
 static uint8_t  USB_Response[DAP_PACKET_COUNT][DAP_PACKET_SIZE];  // Response Buffer (circular)
+static uint16_t  USB_Response_Length[DAP_PACKET_COUNT];			  // To store length of each response
+
+bool REQUEST_FLAG = 0;			//unprocessed DAP request.
+bool BUFFER_FULL_FLAG = 0;
+
+
 
 uint8_t SWO_buff_0[SWO_CAPTURE_BUFF_SIZE];
 uint8_t SWO_buff_1[SWO_CAPTURE_BUFF_SIZE];
@@ -45,8 +51,7 @@ uint8_t SWO_buff_empty;						//flag to indicate that the unused buffer has been 
 uint8_t SWO_buff_overrun_ERR;				//error flag
 uint8_t CDC_Tx_ERR;						//CDC_Transimt_HS failed
 
-bool REQUEST_FLAG = 0;
-bool BUFFER_FULL_FLAG = 0;
+
 
 
 /* Local function prototypes  */
@@ -70,7 +75,7 @@ void DAP_USB_Initialize (void) {
   USB_ResponseIdle   = 1U;
 }
 
-
+#ifdef DAP_FW_V1
 // \brief Prepare HID Report data to send.
 // \param[in]   rtype   report type:
 //                - HID_REPORT_INPUT           = input report requested
@@ -159,6 +164,60 @@ bool HID0_SetReport (uint8_t rtype, uint8_t req, uint8_t rid, const uint8_t *buf
   }
   return true;
 }
+#else
+
+/* @brief Copies the incoming (OutEP) data form USB periphery to the buffer created by the application
+ * @param buf: source buffer
+ * @param len: number of bytes to copy
+ * @retval number of bytes copied
+ */
+uint32_t DAP_BulkSaveDataOut(const uint8_t *buf, uint32_t len){ //TODO cleanup like DAP_GetResponsePointer
+	if (buf[0] == ID_DAP_TransferAbort) {
+		DAP_TransferAbort = 1U;
+		return 0;
+	}
+	if ((uint16_t)(USB_RequestCountI - USB_RequestCountO) == DAP_PACKET_COUNT) {
+		BUFFER_FULL_FLAG = 1;
+		return 0;
+	}
+
+	// Store received data into request buffer
+	memcpy(USB_Request[USB_RequestIndexI], buf, (uint32_t)len);
+	USB_RequestIndexI++;
+	if (USB_RequestIndexI == DAP_PACKET_COUNT) {
+		USB_RequestIndexI = 0U;
+	}
+	USB_RequestCountI++;
+	REQUEST_FLAG = 1;
+
+	return len;
+}
+
+/* @brief		Get the pointer for the next unsent Response, updates buffer indexes
+ * @param1		Return value for size
+ * @retval     	Pointer to the next sendable packet.
+ *             - value = NULL: no data to send
+ */
+uint8_t* DAP_GetNexResponse(uint32_t* ret_size){      						//TODO figure out if a copying could be saved,
+	if (USB_ResponseCountI != USB_ResponseCountO) {  			//	either data can be directly transfered to periph
+		// save index to right element, increment Out index		//  or change the USB_Response circ buffer to semthing else
+		uint16_t n = USB_ResponseIndexO++;
+		if (USB_ResponseIndexO == DAP_PACKET_COUNT) {
+			USB_ResponseIndexO = 0U;
+		}
+		USB_ResponseCountO++;
+
+		*ret_size = USB_Response_Length[n];
+		return USB_Response[n];
+	} else {
+		/* No pending response */
+		USB_ResponseIdle = 1U;
+		return NULL;
+	}
+}
+
+
+#endif /* #ifdef (DAP_FW_V1 ) */
 
 /* Function to call from the uart receive callback.
  * It works on a doubble buffer prinicple. UART DMA is
@@ -180,7 +239,7 @@ void capture_SWO_init(void){
 }
 
 HAL_StatusTypeDef SWO_setspeed(){
-
+	return HAL_ERROR;  //TODO SWO_setspeed
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
@@ -237,38 +296,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
  * based on HID_Standalone wakeup example for f746G disco */
 uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len){
 
-/* once remoteWakeUp is supported properly, I will clean this up //TODO remoteWakeup?
-	if ((pdev->dev_remote_wakeup == 1) && (pdev->dev_state == USBD_STATE_SUSPENDED)){
-		if ((&hpcd_USB_OTG_HS)->Init.low_power_enable)
-		{
-			// Reset SLEEPDEEP bit of Cortex System Control Register
-			SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
 
-	        //SystemClockConfig_STOP();
-		}
-
-		// Ungate PHY clock
-		__HAL_PCD_UNGATE_PHYCLOCK((&hpcd_USB_OTG_HS));
-
-		// Activate Remote wakeup
-		HAL_PCD_ActivateRemoteWakeup((&hpcd_USB_OTG_HS));
-
-		// Remote wakeup delay
-		HAL_Delay(10);
-
-		// Disable Remote wakeup
-		HAL_PCD_DeActivateRemoteWakeup((&hpcd_USB_OTG_HS));
-
-		// change state to configured
-		pdev->dev_state = USBD_STATE_CONFIGURED;
-
-		// Change remote_wakeup feature to 0
-		pdev->dev_remote_wakeup=0;
-		//remotewakeupon = 1;
-
-		printf("Remote wakeup \r\n");
-	}
-*/
+#ifdef USE_USBD_COMPOSITE
 
 	if (USBD_CUSTOM_HID_SendReport(pdev, report, len, CUSTOMHID_InstID) == CUSTOM_HID_BUSY){
 		uint32_t timestamp = HAL_GetTick();
@@ -276,7 +305,14 @@ uint8_t HID_Send_Report(USBD_HandleTypeDef *pdev,uint8_t *report, uint16_t len){
 			//wait
 		}
 	}
-
+#else
+	if (USBD_CUSTOM_HID_SendReport(pdev, report, len) == CUSTOM_HID_BUSY){
+		uint32_t timestamp = HAL_GetTick();
+		while(USBD_CUSTOM_HID_SendReport(pdev, report, len) != USBD_OK && (timestamp + USB_HID_BUSY_USER_TIMEOUT >= HAL_GetTick())){
+			//wait
+		}
+	}
+#endif
 	return 0;
 
 }
@@ -320,7 +356,19 @@ void APP_Run(void){
 		  }
 
 		  // Execute DAP Command (process request and prepare response)
-		  DAP_ExecuteCommand(USB_Request[USB_RequestIndexO], USB_Response[USB_ResponseIndexI]);
+		  uint32_t ret;
+		  ret = DAP_ExecuteCommand(USB_Request[USB_RequestIndexO], USB_Response[USB_ResponseIndexI]);
+		  USB_Response_Length[USB_ResponseIndexI] = (ret & 0x0000ffff); //lower 2bytes contain length of response
+		  if (USB_Response_Length[USB_ResponseIndexI] == DAP_PACKET_SIZE){
+			  while(1){
+				  LED_CONNECTED_OUT (0b1);
+				  LED_RUNNING_OUT(0b1);
+				  HAL_Delay(100);
+				  LED_CONNECTED_OUT (0b0);
+				  LED_RUNNING_OUT(0b0);
+				  HAL_Delay(100);
+			  }
+		  }
 
 		  // Update Request Index and Count
 		  USB_RequestIndexO++;
@@ -346,7 +394,11 @@ void APP_Run(void){
 			  USB_ResponseCountO++;
 			  USB_ResponseIdle = 0U;
 			  /* send data */
-			  HID_Send_Report(&hUsbDeviceHS, USB_Response[n], DAP_PACKET_SIZE);
+#ifdef DAP_FW_V1
+			  HID_Send_Report(&hUsbDeviceHS, USB_Response[n], DAP_PACKET_SIZE);  //TODO add length to other calls if there is any
+#else
+			  USBD_TEMPLATE_Transmit_SWD(&hUsbDeviceHS,USB_Response[n],USB_Response_Length[n]);
+#endif
 			}
 		  }
 		}
@@ -392,7 +444,9 @@ void APP_Setup(void){
 	LED_RUNNING_OUT(1U);                  // Turn on  Target Running LED
 	Delayms(500U);                        // Wait for 500ms
 	LED_RUNNING_OUT(0U);                  // Turn off Target Running LED
-	LED_CONNECTED_OUT(0U);                // Turn off Debugger Connected LED //TODO connect LED
+	LED_CONNECTED_OUT(0U);                // Turn off Debugger Connected LED //TODO figure out why not blinking
+
+	DAP_USB_Initialize();  				  //initialize DAP communication buffers and flags
 
 	capture_SWO_init();					  //start capturing SWO Data
 

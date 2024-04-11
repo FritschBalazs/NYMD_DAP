@@ -35,12 +35,15 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "DAP_config.h"
 
- /* Activate the IAD option */
+#ifdef DAP_FW_V1
+/* Activate the IAD option */
 #define USBD_COMPOSITE_USE_IAD                             1U
 
 /* Activate the composite builder */
 #define USE_USBD_COMPOSITE
+
 
 /* Notify composite builder that we use HS */
 #define USE_USB_HS
@@ -48,6 +51,7 @@
 /* Activate CustomHID and CDC classes in composite builder */
 #define USBD_CMPSIT_ACTIVATE_CUSTOMHID                     1U
 #define USBD_CMPSIT_ACTIVATE_CDC                           1U
+#endif /* (#ifdef DAP_FW_V1)*/
 
 /* USER CODE END INCLUDE */
 
@@ -83,7 +87,11 @@
 /*---------- -----------*/
 #define USBD_DEBUG_LEVEL     3U
 /*---------- -----------*/
+#ifdef  DAP_FW_V1
 #define USBD_LPM_ENABLED     0U
+#else
+#define USBD_LPM_ENABLED     1U
+#endif
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 

@@ -24,7 +24,7 @@
 #include "usbd_conf.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "DAP_config.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,14 +65,49 @@
 #define USBD_VID     0x0483
 #define USBD_LANGID_STRING     0x409
 #define USBD_MANUFACTURER_STRING     "STMicroelectronics"
-#define USBD_PID_HS     0x5750
-#define USBD_PRODUCT_STRING_HS     "STM32 CDC+HID"
-#define USBD_CONFIGURATION_STRING_HS     "CDC Config"
-#define USBD_INTERFACE_STRING_HS     "CDC Interface"
+#define USBD_PID_HS     0x5750  //og: 0x5750
+#ifdef DAP_FW_V1
+	#define USBD_PRODUCT_STRING_HS     "NYMD_DAP V1.3"
+	#define USBD_CONFIGURATION_STRING_HS     "HID+CDC"
+	#define USBD_INTERFACE_STRING_HS     "Triple bulk"
 
-#define USB_SIZ_BOS_DESC            0x0C
+#else
+	#define USBD_PRODUCT_STRING_HS     "CMSIS-DAP v2"//"NYMD_DAP V2.0"
+	#define USBD_CONFIGURATION_STRING_HS     "Custom BULK"
+	#define USBD_INTERFACE_STRING_HS     "Triple bulk"
+#endif /* (#ifdef DAP_FW_V1) */
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
+#define DESC_TYPE_DEVICE_CAPABILITY	  16U		/* For MS OS 2.0 compatibility */
+#define DEVICE_CAPABILITY_PLATFORM	  5U		/* For MS OS 2.0 compatibility */
+#define USB_SIZ_BOS_DESC              33U
+#define USB_LEN_MS_OS_DSC		      0xA2
+
+
+/* inspiration from TinyUSB*/
+#define TU_U16(_high, _low)   ((uint16_t) (((_high) << 8) | (_low)))
+#define TU_U16_HIGH(_u16)     ((uint8_t) (((_u16) >> 8) & 0x00ff))
+#define TU_U16_LOW(_u16)      ((uint8_t) ((_u16)       & 0x00ff))
+#define U16_TO_U8S_BE(_u16)   TU_U16_HIGH(_u16), TU_U16_LOW(_u16)
+#define U16_TO_U8S_LE(_u16)   TU_U16_LOW(_u16), TU_U16_HIGH(_u16)
+
+#define TU_U32_BYTE3(_u32)    ((uint8_t) ((((uint32_t) _u32) >> 24) & 0x000000ff)) // MSB
+#define TU_U32_BYTE2(_u32)    ((uint8_t) ((((uint32_t) _u32) >> 16) & 0x000000ff))
+#define TU_U32_BYTE1(_u32)    ((uint8_t) ((((uint32_t) _u32) >>  8) & 0x000000ff))
+#define TU_U32_BYTE0(_u32)    ((uint8_t) (((uint32_t)  _u32)        & 0x000000ff)) // LSB
+
+#define U32_TO_U8S_BE(_u32)   TU_U32_BYTE3(_u32), TU_U32_BYTE2(_u32), TU_U32_BYTE1(_u32), TU_U32_BYTE0(_u32)
+#define U32_TO_U8S_LE(_u32)   TU_U32_BYTE0(_u32), TU_U32_BYTE1(_u32), TU_U32_BYTE2(_u32), TU_U32_BYTE3(_u32)
+
+#define MS_OS_20_SET_HEADER_DESCRIPTOR       0x00
+#define MS_OS_20_SUBSET_HEADER_CONFIGURATION 0x01
+#define MS_OS_20_SUBSET_HEADER_FUNCTION      0x02
+#define MS_OS_20_FEATURE_COMPATBLE_ID        0x03
+#define MS_OS_20_FEATURE_REG_PROPERTY        0x04
+#define MS_OS_20_FEATURE_MIN_RESUME_TIME     0x05
+#define MS_OS_20_FEATURE_MODEL_ID            0x06
+#define MS_OS_20_FEATURE_CCGP_DEVICE         0x07
+#define MS_OS_20_FEATURE_VENDOR_REVISION     0x08
 
 /* USER CODE END PRIVATE_DEFINES */
 
@@ -121,6 +156,9 @@ uint8_t * USBD_HS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length
 uint8_t * USBD_HS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 uint8_t * USBD_HS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 uint8_t * USBD_HS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
+#ifndef DAP_FW_V1
+uint8_t *USBD_HS_MsOsStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
+#endif /* (#ifndef DAP_FW_V1) */
 
 #if (USBD_LPM_ENABLED == 1)
 uint8_t * USBD_HS_USR_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
@@ -144,6 +182,9 @@ USBD_DescriptorsTypeDef HS_Desc =
 , USBD_HS_SerialStrDescriptor
 , USBD_HS_ConfigStrDescriptor
 , USBD_HS_InterfaceStrDescriptor
+#ifndef DAP_FW_V1
+, USBD_HS_MsOsStrDescriptor
+#endif /*  (ifndef DAP_FW_V1) */
 #if (USBD_LPM_ENABLED == 1)
 , USBD_HS_USR_BOSDescriptor
 #endif /* (USBD_LPM_ENABLED == 1) */
@@ -174,7 +215,11 @@ __ALIGN_BEGIN uint8_t USBD_HS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
   HIBYTE(USBD_VID),           /*idVendor*/
   LOBYTE(USBD_PID_HS),        /*idProduct*/
   HIBYTE(USBD_PID_HS),        /*idProduct*/
+#ifdef DAP_FW_V1
   0x00,                       /*bcdDevice rel. 2.00*/
+#else
+  0x01,						  /*bcdDevice rel. 2.01*/
+#endif
   0x02,
   USBD_IDX_MFC_STR,           /*Index of manufacturer  string*/
   USBD_IDX_PRODUCT_STR,       /*Index of product string*/
@@ -191,17 +236,27 @@ __ALIGN_BEGIN uint8_t USBD_HS_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
 {
   0x5,
   USB_DESC_TYPE_BOS,
-  0xC,
-  0x0,
-  0x1,  /* 1 device capability */
-        /* device capability */
-  0x7,
-  USB_DEVICE_CAPABITY_TYPE,
-  0x2,
-  0x2,  /*LPM capability bit set */
-  0x0,
-  0x0,
-  0x0
+  LOBYTE(USB_SIZ_BOS_DESC),            /* Total length of BOS descriptor and all of its sub descs */
+  HIBYTE(USB_SIZ_BOS_DESC),
+  0x1,  							   /* 1 device capability */
+
+  /* Device Capability Platform descriptor */
+  0x1C,		   						   /* bLength = 28 bytes*/
+  DESC_TYPE_DEVICE_CAPABILITY,		   /* bDescriptorType */
+  DEVICE_CAPABILITY_PLATFORM,		   /* bDevCapabilityType */
+  0x00,								   /* bReserved */
+  0xDF, 0x60, 0xDD, 0xD8,		       /* MS_OS_20_Platform_Capability_ID = D8DD60DF-4589-4CC7-9CD2-659D9E648A9F */
+  0x89, 0x45,						   /* 	the byte order flips midway in the comment but if you google  */
+  0xC7, 0x4C,						   /* 	MS_OS_20_Platform_Capability_ID, all of the results are like this */
+  0x9C, 0xD2, 						   /*	so I assume that the OG comment in the OG documentation if wrong */
+  0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F,
+
+  /*Descriptor Set information 1 */
+  U32_TO_U8S_LE(0x06030000),		   /* dwWindowsVersion = Windows 8.1 or later */
+  U16_TO_U8S_LE(USB_LEN_MS_OS_DSC),	   /* wMSOSDescriptorSetTotalLength */
+  USB_REQ_GET_MSOS2_STRDESC,		   /* bMS_VendorCode */
+  0x00,								   /* bAltEnumCode */
+
 };
 #endif /* (USBD_LPM_ENABLED == 1) */
 
@@ -244,6 +299,52 @@ __ALIGN_BEGIN uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
 /**
   * @}
   */
+
+#ifndef DAP_FW_V1
+/* following section is taken from picoprobe project: */
+
+/* Microsoft OS 2.0 registry property descriptor
+Per MS requirements https://msdn.microsoft.com/en-us/library/windows/hardware/hh450799(v=vs.85).aspx
+device should create DeviceInterfaceGUIDs. It can be done by driver and
+in case of real PnP solution device should expose MS "Microsoft OS 2.0
+registry property descriptor". Such descriptor can insert any record
+into Windows registry per device/configuration/interface. In our case it
+will insert "DeviceInterfaceGUIDs" multistring property. */
+#if defined ( __ICCARM__ ) /*!< IAR Compiler */
+#pragma data_alignment=4
+#endif /* __ICCARM__ */
+/* USB MS OS 2.0 (string) Descriptor */
+__ALIGN_BEGIN static uint8_t USBD_MS_OS_DSC[USB_LEN_MS_OS_DSC] __ALIGN_END =
+{
+  // Set header: length, type, windows version, total length
+  U16_TO_U8S_LE(0x000A), U16_TO_U8S_LE(MS_OS_20_SET_HEADER_DESCRIPTOR), U32_TO_U8S_LE(0x06030000), U16_TO_U8S_LE(USB_LEN_MS_OS_DSC),
+
+  // Configuration subset header: length, type, configuration index, reserved, configuration total length
+  //U16_TO_U8S_LE(0x0008), U16_TO_U8S_LE(MS_OS_20_SUBSET_HEADER_CONFIGURATION), 0, 0, U16_TO_U8S_LE(USB_LEN_MS_OS_DSC-0x0A),
+
+  // Function Subset header: length, type, first interface, reserved, subset length
+  //U16_TO_U8S_LE(0x0008), U16_TO_U8S_LE(MS_OS_20_SUBSET_HEADER_FUNCTION), DAP_V2_IF_NUM , 0, U16_TO_U8S_LE(USB_LEN_MS_OS_DSC-0x0A-0x08), //TODO is this the correct IF number
+
+  // MS OS 2.0 Compatible ID descriptor: length, type, compatible ID, sub compatible ID
+  U16_TO_U8S_LE(0x0014), U16_TO_U8S_LE(MS_OS_20_FEATURE_COMPATBLE_ID), 'W', 'I', 'N', 'U', 'S', 'B', 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // sub-compatible
+
+  // MS OS 2.0 Registry property descriptor: length, type
+  U16_TO_U8S_LE(USB_LEN_MS_OS_DSC-0x0A/*-0x08-0x08*/-0x14), U16_TO_U8S_LE(MS_OS_20_FEATURE_REG_PROPERTY),
+  U16_TO_U8S_LE(0x0007), U16_TO_U8S_LE(0x002A), // wPropertyDataType, wPropertyNameLength and PropertyName "DeviceInterfaceGUIDs\0" in UTF-16
+  'D', 0x00, 'e', 0x00, 'v', 0x00, 'i', 0x00, 'c', 0x00, 'e', 0x00, 'I', 0x00, 'n', 0x00, 't', 0x00, 'e', 0x00,
+  'r', 0x00, 'f', 0x00, 'a', 0x00, 'c', 0x00, 'e', 0x00, 'G', 0x00, 'U', 0x00, 'I', 0x00, 'D', 0x00, 's', 0x00, 0x00, 0x00,
+  U16_TO_U8S_LE(0x0050), // wPropertyDataLength
+  // bPropertyData "{CDB3B5AD-293B-4663-AA36-1AAE46463776}" as a UTF-16 string (b doesn't mean bytes)
+  '{', 0x00, 'C', 0x00, 'D', 0x00, 'B', 0x00, '3', 0x00, 'B', 0x00, '5', 0x00, 'A', 0x00, 'D', 0x00, '-', 0x00,
+  '2', 0x00, '9', 0x00, '3', 0x00, 'B', 0x00, '-', 0x00, '4', 0x00, '6', 0x00, '6', 0x00, '3', 0x00, '-', 0x00,
+  'A', 0x00, 'A', 0x00, '3', 0x00, '6', 0x00, '-', 0x00, '1', 0x00, 'A', 0x00, 'A', 0x00, 'E', 0x00, '4', 0x00,
+  '6', 0x00, '4', 0x00, '6', 0x00, '3', 0x00, '7', 0x00, '7', 0x00, '6', 0x00, '}', 0x00, 0x00, 0x00, 0x00, 0x00
+
+};
+#endif /*  (ifndef DAP_FW_V1) */
+
+
 
 /** @defgroup USBD_DESC_Private_Functions USBD_DESC_Private_Functions
   * @brief Private functions.
@@ -366,6 +467,31 @@ uint8_t * USBD_HS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
   }
   return USBD_StrDesc;
 }
+
+#ifndef DAP_FW_V1
+/**
+  * @brief  Returns the Microsoft OS (string) descriptor.
+  * @param  speed: Current device speed
+  * @param  length: Pointer to data length variable
+  * @retval Pointer to descriptor buffer
+  */
+uint8_t *USBD_HS_MsOsStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length){
+  if (speed == USBD_SPEED_HIGH)
+  {
+	  *length = sizeof(USBD_MS_OS_DSC);
+	   return (uint8_t *)USBD_MS_OS_DSC;
+	//USBD_GetString((uint8_t *)USBD_TEMPLATE_MOD_STR, USBD_StrDesc, length);
+  }
+  else
+  {
+	  *length = sizeof(USBD_MS_OS_DSC);
+	   return (uint8_t *)USBD_MS_OS_DSC;
+	//USBD_GetString((uint8_t *)USBD_MS_OS_DSC, USBD_StrDesc, length);
+  }
+  //return USBD_StrDesc;
+}
+#endif /*(#ifndef DAP_FW_V1)*/
+
 
 #if (USBD_LPM_ENABLED == 1)
 /**

@@ -26,7 +26,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_conf.h"
-
+#include "DAP.h"
+#include "DAP_config.h"
 /** @addtogroup STM32_USBD_DEVICE_LIBRARY
   * @{
   */
@@ -105,6 +106,7 @@ extern "C" {
 #define  USBD_IDX_SERIAL_STR                            0x03U
 #define  USBD_IDX_CONFIG_STR                            0x04U
 #define  USBD_IDX_INTERFACE_STR                         0x05U
+#define  USBD_IDX_MOD_STR								0xEEU  /*MS OS 1.0 Descriptor. Not implemented */
 
 #define  USB_REQ_TYPE_STANDARD                          0x00U
 #define  USB_REQ_TYPE_CLASS                             0x20U
@@ -127,6 +129,8 @@ extern "C" {
 #define  USB_REQ_GET_INTERFACE                          0x0AU
 #define  USB_REQ_SET_INTERFACE                          0x0BU
 #define  USB_REQ_SYNCH_FRAME                            0x0CU
+#define  USB_REQ_GET_MSOS2_STRDESC						0x20U /* Added for MS OS 2.0 support. Spec. calls it vendor code */
+//TODO: figure out why 0x20?
 
 #define  USB_DESC_TYPE_DEVICE                           0x01U
 #define  USB_DESC_TYPE_CONFIGURATION                    0x02U
@@ -294,6 +298,9 @@ typedef struct
   uint8_t *(*GetSerialStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
   uint8_t *(*GetConfigurationStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
   uint8_t *(*GetInterfaceStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
+#ifndef DAP_FW_V1
+  uint8_t *(*GetMsOsStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);				/*MS OS 2.0 string descriptor */
+#endif
 #if (USBD_CLASS_USER_STRING_DESC == 1)
   uint8_t *(*GetUserStrDescriptor)(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length);
 #endif /* USBD_CLASS_USER_STRING_DESC */

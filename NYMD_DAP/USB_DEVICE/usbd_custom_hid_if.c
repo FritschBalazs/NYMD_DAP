@@ -190,7 +190,7 @@ USBD_CUSTOM_HID_ItfTypeDef USBD_CustomHID_fops_HS =
 static int8_t CUSTOM_HID_Init_HS(void)
 {
   /* USER CODE BEGIN 8 */
-  DAP_USB_Initialize();  //initialize the DAP<->USB communication
+
   return (USBD_OK);
   /* USER CODE END 8 */
 }

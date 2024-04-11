@@ -155,8 +155,13 @@ static int8_t CDC_Init_HS(void)
 {
   /* USER CODE BEGIN 8 */
   /* Set Application Buffers */
+#ifdef USE_USBD_COMPOSITE
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0, CDC_InstID);
+#else
+  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, 0);
+#endif /* (#ifdef USE_USBD_COMPOSITE) */
   USBD_CDC_SetRxBuffer(&hUsbDeviceHS, UserRxBufferHS);
+
   return (USBD_OK);
   /* USER CODE END 8 */
 }
@@ -222,7 +227,7 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /*                                        4 - Space                            */
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
-  case CDC_SET_LINE_CODING:
+  case CDC_SET_LINE_CODING:  /* TODO set linecoding */
 
     break;
 
@@ -285,8 +290,13 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
+#ifdef USE_USBD_COMPOSITE
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, Buf, Len,CDC_InstID);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceHS,CDC_InstID);
+#else
+  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, Buf, Len);
+  result = USBD_CDC_TransmitPacket(&hUsbDeviceHS);
+#endif
   /* USER CODE END 12 */
   return result;
 }

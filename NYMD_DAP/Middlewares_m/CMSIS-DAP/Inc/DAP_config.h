@@ -30,6 +30,13 @@
 
 #include "main.h"
 #include "gpio.h"
+//#include "usbd_def.h" //TODO (longterm) figure out why incluiding this breaks everything
+
+/* Switch between CMSIS-DAP versions
+ * It also switches between the too main USB implementations
+ * Bulk (supported in v2) and HID (supported in V1.3) implementation
+ */
+//#define  DAP_FW_V1
 
 
 
@@ -57,7 +64,7 @@ This information includes:
 
 /// Processor Clock of the Cortex-M MCU used in the Debug Unit.
 /// This value is used to calculate the SWD/JTAG clock speed.
-#define CPU_CLOCK              200000000U      ///< Specifies the CPU Clock in Hz.
+#define CPU_CLOCK              180000000U      ///< Specifies the CPU Clock in Hz.
 
 /// Number of processor cycles for I/O Port write operations.
 /// This value is used to calculate the SWD/JTAG clock speed that is generated with I/O
@@ -92,7 +99,11 @@ This information includes:
 /// This configuration settings is used to optimize the communication performance with the
 /// debugger and depends on the USB peripheral. Typical vales are 64 for Full-speed USB HID or WinUSB,
 /// 1024 for High-speed USB HID and 512 for High-speed USB WinUSB.
-#define DAP_PACKET_SIZE         1024U            ///< Specifies Packet Size in bytes.
+#ifdef DAP_FW_V1
+#define DAP_PACKET_SIZE   1024
+#else
+#define DAP_PACKET_SIZE         (USB_OTG_HS_MAX_PACKET_SIZE)            ///< Specifies Packet Size in bytes.
+#endif /* (#ifdef DAP_FW_V1) */
 
 /// Maximum Package Buffers for Command and Response data.
 /// This configuration settings is used to optimize the communication performance with the
