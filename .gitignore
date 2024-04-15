@@ -63,5 +63,6 @@ dkms.conf
 #launch configs
 *.launch
 
-#test.py
-/swo_parser/test.py
+#test.py and csv-s
+/scripts/test.py
+/scripts/*.csv

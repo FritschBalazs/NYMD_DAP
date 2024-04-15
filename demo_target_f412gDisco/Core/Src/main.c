@@ -33,6 +33,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define JOY_BOUNCE_VAL 100
+#define TEST_DATA_SIZE 10000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,7 +50,7 @@ GPIO_TypeDef* joy_PORTS[] = {JOY_RIGHT_GPIO_Port, JOY_LEFT_GPIO_Port, JOY_UP_GPI
 const uint16_t joy_PINS[] = {JOY_RIGHT_Pin, JOY_LEFT_Pin, JOY_UP_Pin, JOY_DOWN_Pin, JOY_SEL_Pin};
 
 uint8_t joy_cnt[5];
-
+uint32_t test_data[TEST_DATA_SIZE];  //0x20000128
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,6 +60,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void setup_TRACE(void);
+void add_data_pattern(uint32_t* start,uint32_t size);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -85,6 +87,7 @@ int main(void)
   uint8_t data[] = "Hello world qwertzuiopasdfghjklyxcvbnm=+-*/123456789 ";
   uint8_t uart_sendonce_up = 0;
   uint8_t uart_sendonce_dwn = 0;
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -110,6 +113,8 @@ int main(void)
   HAL_GPIO_WritePin( LED4_BLU_GPIO_Port,  LED4_BLU_Pin, GPIO_PIN_SET);
 
   printf(" Demo target for NYMD_DAP project.\r\n");
+
+  add_data_pattern(test_data, TEST_DATA_SIZE);
 
   /* USER CODE END 2 */
 
@@ -372,6 +377,13 @@ void setup_TRACE(void){
 
   ITM->TCR = 0x0000030B;
   ITM->TER = 0xFFFFFFFF; // Trace Enable Register: All ports enabled
+}
+
+void add_data_pattern(uint32_t* array, uint32_t size){
+	for (uint32_t idx=0;idx<size;idx++){
+		array[idx] = idx;
+	}
+
 }
 /* USER CODE END 4 */
 
