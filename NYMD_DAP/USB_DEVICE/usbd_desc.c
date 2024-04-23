@@ -64,17 +64,17 @@
 
 #define USBD_VID     0x0483
 #define USBD_LANGID_STRING     0x409
-#define USBD_MANUFACTURER_STRING     "STMicroelectronics"
+#define USBD_MANUFACTURER_STRING     "NYMD Industries"
 #define USBD_PID_HS     0x5750  //og: 0x5750
 #ifdef DAP_FW_V1
-	#define USBD_PRODUCT_STRING_HS     "NYMD_DAP V1.3"
+	#define USBD_PRODUCT_STRING_HS     "CMSIS-DAP V1.3"
 	#define USBD_CONFIGURATION_STRING_HS     "HID+CDC"
-	#define USBD_INTERFACE_STRING_HS     "Triple bulk"
+	#define USBD_INTERFACE_STRING_HS     "CMSIS-DAP v1.3"
 
 #else
-	#define USBD_PRODUCT_STRING_HS     "CMSIS-DAP v2"//"NYMD_DAP V2.0"
+	#define USBD_PRODUCT_STRING_HS     "NYMD-DAP v2"
 	#define USBD_CONFIGURATION_STRING_HS     "Custom BULK"
-	#define USBD_INTERFACE_STRING_HS     "Triple bulk"
+	#define USBD_INTERFACE_STRING_HS     "CMSIS-DAP v2"
 #endif /* (#ifdef DAP_FW_V1) */
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
