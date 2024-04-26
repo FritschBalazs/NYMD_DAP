@@ -160,7 +160,7 @@ int main(void)
 
 
   //printf("\r\n");
-  printf("NYMD DAP, running in HID mode\r\n");
+  printf("NYMD DAP, running in HID mode\r\n"); //TODO add HID/BULK switch
   printf("Build: "__DATE__" " __TIME__"\r\n");
   APP_Setup();
 

@@ -368,12 +368,12 @@ static uint8_t USBD_TEMPLATE_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   // A bulk transfer is complete when the endpoint does on of the following:
   // - Has transferred exactly the amount of data expected
   // - Transfers a packet with a payload size less than wMaxPacketSize or transfers a zero-length packet
-  if (pdev->ep_in[epnum].total_length && !(pdev->ep_in[epnum].total_length % USB_HS_MAX_PACKET_SIZE))
+  /*if (pdev->ep_in[epnum].total_length && !(pdev->ep_in[epnum].total_length % USB_HS_MAX_PACKET_SIZE))
   {
 	pdev->ep_in[epnum].total_length = 0;
 	USBD_LL_Transmit(pdev, epnum, NULL, 0);
   }
-  else{
+  else{*/
 	if (epnum == (EPIN_ADDR_SWD & EP_ADDR_7F_MASK)){
 		/* set flag to inidcate endpoint is free */
 		data_in_busy_EP_SWD = false;
@@ -390,7 +390,7 @@ static uint8_t USBD_TEMPLATE_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 		data_in_busy_EP_SWO = false;
 		//TODO add SWO transmit next?
 	}
-  }
+  //}
   return USBD_OK;
 }
 
@@ -468,8 +468,8 @@ static uint8_t USBD_TEMPLATE_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
   if (bytes_received == 0){
 	  while(1);
   }
-  DAP_BulkSaveDataOut(bulk_interm_buf_SWD_EpOut, DAP_ID_PACKET_SIZE);    //TODO check if we have to copy entire block, or just bytes_received
-  USBD_LL_PrepareReceive(pdev, EPOUT_ADDR_SWD, bulk_interm_buf_SWD_EpOut, DAP_ID_PACKET_SIZE);
+  DAP_BulkSaveDataOut(bulk_interm_buf_SWD_EpOut, DAP_PACKET_SIZE);    //TODO check if we have to copy entire block, or just bytes_received
+  USBD_LL_PrepareReceive(pdev, EPOUT_ADDR_SWD, bulk_interm_buf_SWD_EpOut, DAP_PACKET_SIZE);
   return USBD_OK;
 
   return (uint8_t)USBD_OK;

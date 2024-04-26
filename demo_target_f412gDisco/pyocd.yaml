@@ -1,0 +1,9 @@
+probes:
+  388A396E3432: # Probe's unique ID.
+    target_override:  STM32F412ZGTx
+    #test_binary:      stm32l475vg_iot01a.bin
+
+# Global options
+#auto_unlock: false
+frequency: 4000000 # Set 8 MHz SWD default for all probes
+cmsis_dap.limit_packets: True
