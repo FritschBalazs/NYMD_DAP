@@ -6,4 +6,4 @@ probes:
 # Global options
 #auto_unlock: false
 frequency: 4000000 # Set 8 MHz SWD default for all probes
-cmsis_dap.limit_packets: True
+#cmsis_dap.limit_packets: True

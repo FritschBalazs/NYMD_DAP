@@ -1,8 +1,13 @@
 from matplotlib import pyplot as plt
 import csv
 
-file_1 = "test_L4_7c2248.csv"
-file_2 = "test_X_7c2248.csv"
+#file_1 = "test_1_v1-3_cd55b7.csv"
+#file_2 = "test_1_v2-1_cd55b7.csv"
+
+file_1  = "test_L2_541fec.csv"
+label_1 = "1"
+file_2  = "test_L5_541fec.csv"
+label_2 = "2"
 
 #returns the processed data, number of commands found, and number of iterations/command
 def read_data(filename):
@@ -52,12 +57,13 @@ try:
         #create new window
         plt.figure()
         #plot the two corresponding measurements
-        plt.plot(range(n_iter_1), data_1[cmd][1:], color='b', linestyle = '-', marker = '.')
-        plt.plot(range(n_iter_1), data_2[cmd][1:], color='r', linestyle = '--', marker = '.')
+        plt.plot(range(n_iter_1), data_1[cmd][1:], color='b', linestyle = '-', marker = '.',label = label_1)
+        plt.plot(range(n_iter_1), data_2[cmd][1:], color='r', linestyle = '--', marker = '.',label = label_2)
         #give the command as title
         plt.title(data_1[cmd][0])
         #set astethics
         plt.grid(True)
+        plt.legend(loc="upper right")
         if n_iter_1 <= 20:
             plt.xticks(range(n_iter_1))
 

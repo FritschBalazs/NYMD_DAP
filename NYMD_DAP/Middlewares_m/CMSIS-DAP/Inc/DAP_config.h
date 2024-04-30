@@ -101,7 +101,7 @@ This information includes:
 /// 1024 for High-speed USB HID and 512 for High-speed USB WinUSB.
 #ifdef DAP_FW_V1
 #define DAP_PACKET_SIZE   1024
-#else
+#else										// size=65 works with pyocd
 #define DAP_PACKET_SIZE         (USB_OTG_HS_MAX_PACKET_SIZE)            ///< Specifies Packet Size in bytes.
 #endif /* (#ifdef DAP_FW_V1) */
 
@@ -109,7 +109,7 @@ This information includes:
 /// This configuration settings is used to optimize the communication performance with the
 /// debugger and depends on the USB peripheral. For devices with limited RAM or USB buffer the
 /// setting can be reduced (valid range is 1 .. 255).
-#define DAP_PACKET_COUNT        8U              ///< Specifies number of packets buffered.
+#define DAP_PACKET_COUNT        80U              ///< Specifies number of packets buffered.
 
 /// Indicate that UART Serial Wire Output (SWO) trace is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.

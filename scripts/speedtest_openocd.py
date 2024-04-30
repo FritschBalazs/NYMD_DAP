@@ -8,7 +8,7 @@ HOST = "localhost"
 PORT = 4444 
 
 # Test settings
-num_of_reps = 50
+num_of_reps = 1
 test_commands = ["read_memory 0x20000128 32 100", "read_memory 0x20000128 32 500", "read_memory 0x20000128 8 100", 
                  "read_memory 0x20006cf8 32 100", "read_memory 0x20006cf8 16  100", 
                  "read_memory 0x20002388 8 100", "read_memory 0x20002389 8  100"]
