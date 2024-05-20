@@ -6,9 +6,9 @@ import time
 
 
 # Test settings
-num_of_reps = 50
+num_of_reps = 25
 test_commands = [['r8', 0x20000128, 1],     ['r16', 0x20000128, 1],     ['r32', 0x20000128, 1],
-                 ['rb8', 0x20000128, 4000], ['rb32', 0x20000128, 1000], ['rb32', 0x20000128, 10000]]
+                 ['rb8', 0x20000128, 4000], ['rb32', 0x20000128, 1000], ['rb32', 0x20000128, 500]]
                  
 
 cmdPrint = True
@@ -22,7 +22,7 @@ meas_data = list()
 repo = git.Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
 
-session = ConnectHelper.session_with_chosen_probe(unique_id = "388A396E3432", options = {"frequency": 10000000, "target_override": "STM32F412ZGTx"})
+session = ConnectHelper.session_with_chosen_probe(unique_id = "388A396E3432", options = {"frequency": 24000000, "target_override": "STM32F412ZGTx"})
 
 
 

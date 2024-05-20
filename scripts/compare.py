@@ -4,10 +4,10 @@ import csv
 #file_1 = "test_1_v1-3_cd55b7.csv"
 #file_2 = "test_1_v2-1_cd55b7.csv"
 
-file_1  = "test_L2_541fec.csv"
-label_1 = "1"
-file_2  = "test_L5_541fec.csv"
-label_2 = "2"
+file_1  = "test_HID_2419ec.csv"
+label_1 = "HID"
+file_2  = "test_BULK_2419ec.csv"
+label_2 = "BULK"
 
 #returns the processed data, number of commands found, and number of iterations/command
 def read_data(filename):
@@ -66,6 +66,8 @@ try:
         plt.legend(loc="upper right")
         if n_iter_1 <= 20:
             plt.xticks(range(n_iter_1))
+        plt.xlabel("Iterations")
+        plt.ylabel("Response time [s]")
 
     plt.show()
 
