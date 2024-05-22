@@ -361,7 +361,7 @@ void APP_Run(void){
 		  USB_Response_Length[USB_ResponseIndexI] = (ret & 0x0000ffff); //lower 2bytes contain length of response
 		  //uint16_t request_length= (ret & 0xffff0000)>>16;
 		  //printf("Last Request size: %i \r\n Last Respons size: %i\r\n ",request_length,USB_Response_Length[USB_ResponseIndexI]);
-		  if (USB_Response_Length[USB_ResponseIndexI] == DAP_PACKET_SIZE){
+		  /*if (USB_Response_Length[USB_ResponseIndexI] == DAP_PACKET_SIZE){
 			  //this is to help debug ZLP bugs.
 			  while(1){
 				  LED_CONNECTED_OUT (0b1);
@@ -371,7 +371,7 @@ void APP_Run(void){
 				  LED_RUNNING_OUT(0b0);
 				  HAL_Delay(100);
 			  }
-		  }
+		  }*/
 
 		  // Update Request Index and Count
 		  USB_RequestIndexO++;

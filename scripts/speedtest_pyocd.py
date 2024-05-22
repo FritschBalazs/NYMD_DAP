@@ -7,11 +7,11 @@ import time
 
 # Test settings
 num_of_reps = 25
-test_commands = [['r8', 0x20000128, 1],     ['r16', 0x20000128, 1],     ['r32', 0x20000128, 1],
+test_commands = [['r8', 0x20000128, 1],     ['r32', 0x20000128, 1],     ['rb32', 0x20000128, 20],
                  ['rb8', 0x20000128, 4000], ['rb32', 0x20000128, 1000], ['rb32', 0x20000128, 500]]
                  
 
-cmdPrint = True
+cmdPrint = False
 
 #Timer setup
 t = Timer(text="Elapsed time: {:0.6f} seconds",name="accumulate")
@@ -30,37 +30,37 @@ def time_command(command,adress=0x80000000,length=4):
     if command == "rb32":
         t.start()
         ret = target.read_memory_block32(adress,length)
+        dT = t.stop()
         if cmdPrint:
             print(ret)
-        dT = t.stop()
         return dT
     if command == "rb8":
         t.start()
         ret = target.read_memory_block8(adress,length)
+        dT = t.stop()
         if cmdPrint:
             print(ret)
-        dT = t.stop()
         return dT
     if command == "r32" :
         t.start()
         ret = target.read_memory(adress,32)
+        dT = t.stop()
         if cmdPrint:
             print(ret)
-        dT = t.stop()
         return dT
     if command == "r16":
         t.start()
         ret = target.read_memory(adress,16)
+        dT = t.stop()
         if cmdPrint:
             print(ret)
-        dT = t.stop()
         return dT
     if command == "r8":
         t.start()
         ret = target.read_memory(adress,8)
+        dT = t.stop()
         if cmdPrint:
             print(ret)
-        dT = t.stop()
         return dT
 
 
@@ -89,7 +89,6 @@ with session:
                 #save the command and the response time
                 meas_data.append([cmd,rt])
                 
-                #time.sleep(0.1) #TODO check is this is still needed
         #get the total time ellapsed
         total = Timer.timers
         print("Sum of all commands %f s",total)
