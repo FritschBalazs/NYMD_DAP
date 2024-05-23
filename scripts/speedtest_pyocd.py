@@ -22,7 +22,13 @@ meas_data = list()
 repo = git.Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
 
-session = ConnectHelper.session_with_chosen_probe(unique_id = "388A396E3432", options = {"frequency": 24000000, "target_override": "STM32F412ZGTx"})
+#NYMD-DAP
+#session = ConnectHelper.session_with_chosen_probe(unique_id = "388A396E3432", options = {"frequency": 16000000, "target_override": "STM32F412ZGTx"})
+#built in
+#session = ConnectHelper.session_with_chosen_probe(unique_id = "0673FF333036434B43072733", options = {"frequency": 24000000, "target_override": "STM32F412ZGTx"}) 
+#external
+session = ConnectHelper.session_with_chosen_probe(unique_id = "066FFF575051717867040633", options = {"frequency": 16000000, "target_override": "STM32F412ZGTx"}) 
+
 
 
 
@@ -103,7 +109,7 @@ with session:
             writer.writerow(csv_header)
             # Add multiple rows of data
             writer.writerows(meas_data)
-        print("Test finished closing connection.")
+        print("Test finished, results saved to: "+filename)
        
 
     except KeyboardInterrupt:

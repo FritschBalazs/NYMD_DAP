@@ -4,9 +4,9 @@ import csv
 #file_1 = "test_1_v1-3_cd55b7.csv"
 #file_2 = "test_1_v2-1_cd55b7.csv"
 
-file_1  = "test_HID_2419ec.csv"
-label_1 = "HID"
-file_2  = "test_BULK_2419ec.csv"
+file_1  = "test_X_067dc8.csv"
+label_1 = "STLINK"
+file_2  = "test_BULK_24_067dc8.csv"
 label_2 = "BULK"
 
 #returns the processed data, number of commands found, and number of iterations/command
@@ -68,6 +68,9 @@ try:
             plt.xticks(range(n_iter_1))
         plt.xlabel("Iterations")
         plt.ylabel("Response time [s]")
+        lim1 = max(data_1[cmd][1:])*1.2
+        lim2 = max(data_2[cmd][1:])*1.2
+        plt.ylim(0, max(lim1,lim2))
 
     plt.show()
 

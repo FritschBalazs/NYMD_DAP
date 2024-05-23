@@ -1,0 +1,3 @@
+blinking on eqaul packets diabled
+24 MHz SWO speed
+16 MHz SWO speed
