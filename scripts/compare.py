@@ -4,8 +4,8 @@ import csv
 #file_1 = "test_1_v1-3_cd55b7.csv"
 #file_2 = "test_1_v2-1_cd55b7.csv"
 
-file_1  = "test_X_067dc8.csv"
-label_1 = "STLINK"
+file_1  = "test_HID_24_067dc8.csv"
+label_1 = "HID"
 file_2  = "test_BULK_24_067dc8.csv"
 label_2 = "BULK"
 
@@ -71,6 +71,14 @@ try:
         lim1 = max(data_1[cmd][1:])*1.2
         lim2 = max(data_2[cmd][1:])*1.2
         plt.ylim(0, max(lim1,lim2))
+
+        #calculate avarage response time
+        avg_1 = sum(data_1[cmd][1:])/n_iter_1
+        avg_2 = sum(data_2[cmd][1:])/n_iter_2
+        size = (1,1*4,20*4,4000,1000*4,500*4)
+        #print(avg_1)
+        print("In",label_1," for command" ,data_1[cmd][0], ": \t %f" % (size[cmd]/avg_1/1000),"kBps")
+        print("In",label_2,"for command" ,data_2[cmd][0], ": \t %f" % (size[cmd]/avg_2/1000),"kBps")
 
     plt.show()
 
