@@ -23,11 +23,11 @@ repo = git.Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
 
 #NYMD-DAP
-#session = ConnectHelper.session_with_chosen_probe(unique_id = "388A396E3432", options = {"frequency": 16000000, "target_override": "STM32F412ZGTx"})
+session = ConnectHelper.session_with_chosen_probe(unique_id = "388A396E3432", options = {"frequency": 24000000, "target_override": "STM32F412ZGTx"})
 #built in
 #session = ConnectHelper.session_with_chosen_probe(unique_id = "0673FF333036434B43072733", options = {"frequency": 24000000, "target_override": "STM32F412ZGTx"}) 
 #external
-session = ConnectHelper.session_with_chosen_probe(unique_id = "066FFF575051717867040633", options = {"frequency": 16000000, "target_override": "STM32F412ZGTx"}) 
+#session = ConnectHelper.session_with_chosen_probe(unique_id = "066FFF575051717867040633", options = {"frequency": 16000000, "target_override": "STM32F412ZGTx"}) 
 
 
 
@@ -93,7 +93,7 @@ with session:
                 #send the command and wait for the reply
                 rt = time_command(cmd[0],cmd[1],cmd[2])
                 #save the command and the response time
-                meas_data.append([cmd,rt])
+                meas_data.append([[cmd[0], hex(cmd[1]), cmd[2]],rt])
                 
         #get the total time ellapsed
         total = Timer.timers
