@@ -1,1 +1,2 @@
 swd set to 24000 kHz, clean build, HID first
+-O0

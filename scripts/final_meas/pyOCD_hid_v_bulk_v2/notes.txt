@@ -1,0 +1,3 @@
+-Ofast
+-HID first, from .hex
+-24 MHz SWD

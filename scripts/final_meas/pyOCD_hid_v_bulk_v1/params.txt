@@ -1,2 +1,3 @@
 BULK first, aztán HID
 SWO 24 000 kHz
+-O0
