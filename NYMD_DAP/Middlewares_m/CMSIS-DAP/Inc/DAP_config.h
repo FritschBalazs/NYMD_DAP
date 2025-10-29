@@ -80,7 +80,7 @@ This information includes:
 
 /// Indicate that JTAG communication mode is available at the Debug Port.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
-#define DAP_JTAG                0               ///< JTAG Mode: 1 = available, 0 = not available.
+#define DAP_JTAG                1               ///< JTAG Mode: 1 = available, 0 = not available.
 
 /// Configure maximum number of JTAG devices on the scan chain connected to the Debug Access Port.
 /// This setting impacts the RAM requirements of the Debug Unit. Valid range is 1 .. 255.
@@ -326,7 +326,33 @@ Configures the DAP Hardware I/O pins for JTAG mode:
  - TDO to input mode.
 */
 __STATIC_INLINE void PORT_JTAG_SETUP (void) {
-  return;
+
+	/* Configure Jtag only pins */
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = TARGET_nRESET_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	HAL_GPIO_Init(TARGET_nRESET_GPIO_Port, &GPIO_InitStruct);
+
+	/*Configure GPIO pin : PtPin */
+	GPIO_InitStruct.Pin = TARGET_NC_TDI_Pin | TARGET_SWDIO_TMS_Pin | TARGET_SWCLK_TCK_Pin;;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	HAL_GPIO_Init(TARGET_NC_TDI_GPIO_Port, &GPIO_InitStruct);
+
+	/*Configure GPIO pin : PtPin */
+	GPIO_InitStruct.Pin = TARGET_SWO_TDO_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	HAL_GPIO_Init(TARGET_SWO_TDO_GPIO_Port, &GPIO_InitStruct);
+
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(TARGET_nRESET_GPIO_Port, TARGET_nRESET_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TARGET_NC_TDI_GPIO_Port, TARGET_NC_TDI_Pin | TARGET_SWDIO_TMS_Pin | TARGET_SWDIO_TMS_Pin, GPIO_PIN_SET);
 }
 
 /** Setup SWD I/O pins: SWCLK, SWDIO, and nRESET.
@@ -354,7 +380,7 @@ __STATIC_INLINE void PORT_SWD_SETUP (void) {
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(TARGET_nRESET_GPIO_Port, TARGET_nRESET_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(TARGET_SWDIO_TMS_GPIO_Port, TARGET_SWDIO_TMS_Pin|TARGET_SWDIO_TMS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TARGET_SWDIO_TMS_GPIO_Port, TARGET_SWDIO_TMS_Pin | TARGET_SWDIO_TMS_Pin, GPIO_PIN_SET);
 }
 
 /** Disable JTAG/SWD I/O Pins.
@@ -363,7 +389,7 @@ Disables the DAP Hardware I/O pins which configures:
 */
 __STATIC_INLINE void PORT_OFF (void) {
 	HAL_GPIO_DeInit(TARGET_nRESET_GPIO_Port, TARGET_nRESET_Pin);
-	HAL_GPIO_DeInit(TARGET_SWDIO_TMS_GPIO_Port, TARGET_SWDIO_TMS_Pin|TARGET_SWCLK_TCK_Pin);
+	HAL_GPIO_DeInit(TARGET_SWDIO_TMS_GPIO_Port, TARGET_SWDIO_TMS_Pin | TARGET_SWCLK_TCK_Pin | TARGET_SWO_TDO_Pin | TARGET_NC_TDI_Pin);
 }
 
 
@@ -463,14 +489,14 @@ __STATIC_FORCEINLINE void     PIN_SWDIO_OUT_DISABLE (void) {
 \return Current status of the TDI DAP hardware I/O pin.
 */
 __STATIC_FORCEINLINE uint32_t PIN_TDI_IN  (void) { //TODO configure jtag pins
-  return (0U);
+	return HAL_GPIO_ReadPin(TARGET_NC_TDI_GPIO_Port, TARGET_NC_TDI_Pin);
 }
 
 /** TDI I/O pin: Set Output.
 \param bit Output value for the TDI DAP hardware I/O pin.
 */
 __STATIC_FORCEINLINE void     PIN_TDI_OUT (uint32_t bit) {
-  ;
+	HAL_GPIO_WritePin(TARGET_NC_TDI_GPIO_Port, TARGET_NC_TDI_Pin, (bit & 1u));
 }
 
 
@@ -480,7 +506,7 @@ __STATIC_FORCEINLINE void     PIN_TDI_OUT (uint32_t bit) {
 \return Current status of the TDO DAP hardware I/O pin.
 */
 __STATIC_FORCEINLINE uint32_t PIN_TDO_IN  (void) {
-  return (0U);
+	return HAL_GPIO_ReadPin(TARGET_SWO_TDO_GPIO_Port, TARGET_SWO_TDO_Pin);
 }
 
 
